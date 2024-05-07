@@ -10,6 +10,7 @@ export class Setup implements SetupInterface {
     scene: AWGLBScene | undefined;
     useSRGBEncoding: boolean = true;
     static sipMode: boolean = false;
+    useAWSound?: boolean = true;
 
     //---------------------------------------------------------
 
@@ -27,6 +28,8 @@ export class Setup implements SetupInterface {
     getAssets(): AssetDefs {
         return {
             textures: [
+                ["GREEN_STRIPE_PASEK_3", assets.GREEN_STRIPE_PASEK_3],
+                ["WHITE_STRIPE_PASEK_3", assets.WHITE_STRIPE_PASEK_3]
             ],
             sounds: [
             ],
@@ -41,8 +44,7 @@ export class Setup implements SetupInterface {
 
     //---------------------------------------------------------
 
-    processAssets(assetsLib: AssetsLib): void {
-    }
+    processAssets(assetsLib: AssetsLib): void {}
 
     //---------------------------------------------------------
 

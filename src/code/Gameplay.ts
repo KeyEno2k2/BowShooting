@@ -27,6 +27,7 @@ import {
  import { DEG2RAD, RAD2DEG, randFloat, randInt } from "three/src/math/MathUtils"
  import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib"
  import { ArrowTrace } from "./ArrowTrace"
+import { Setup } from "./Setup"
 
  const THROWS: number = 3;
  const RESTART_TIME_MILISECONDS: number = 2200;
@@ -113,6 +114,14 @@ import {
 
     }
 
+    onPointerUp(event: MouseEvent) : boolean {
+        if (Setup.sipMode){
+            return true;
+        }
 
+        if (Game.sessionCounter > 1){
+            return true;
+        }
+    }
     
  }
