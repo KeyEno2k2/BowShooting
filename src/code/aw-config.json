@@ -1,0 +1,15 @@
+{
+    "version": "1.0.0",
+    "assets": {
+        "uis": [],
+        "textures": [],
+        "sounds": [],
+        "atlases": [],
+        "animations": [],
+        "materials": [],
+        "particles": []
+    },
+    "settings": {
+        "rorder": {}
+    }
+}
