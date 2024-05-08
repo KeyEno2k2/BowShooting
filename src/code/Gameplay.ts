@@ -122,6 +122,24 @@ import { Setup } from "./Setup"
         if (Game.sessionCounter > 1){
             return true;
         }
+        this.bowAnimation1.visible = true;
+        this.bowAnimation2.visible = true;
+        this.bowAnimation3.visible = true;
+        if (this.shooted || !this.arrowInBow){
+            return true;
+        }
+        //this.ResetPositions();
+        //this.ShootArrow();
+        Game.game.hud.hideMiniGame();
+        if (!this.shooted){
+            Game.game.hud.showWhiteTutorial();
+        }
+        return true;
+    }
+
+    onPointerDown(event: MouseEvent) : boolean {
+
+        return true;
     }
     
  }

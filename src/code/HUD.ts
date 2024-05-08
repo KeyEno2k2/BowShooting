@@ -20,7 +20,7 @@ export class HUD extends AWUIScreen {
     scalee: AWUIElement;
     arrowHUD: AWUIElement;
     targetHUD: AWUIElement;
-    showAnimator?: Animator
+    showAnimator?: Animator;
     
     showButton1Animator?: Animator;
     hideButton1Animator?: Animator;
@@ -66,8 +66,8 @@ export class HUD extends AWUIScreen {
         this.targetHUD.setAlpha(0);
         this.arrowHUD.setAlpha(0);
         this.scalee.setAlpha(0);
-        //this.animateMiniGames();
-        //this.tutorialWithoutBlendaAnimate();
+        this.animateMiniGames();
+        this.tutorialWithoutBlendaAnimate();
 
         this.arrowShape.visible = false;
         this.arrowShape.setAlpha(0);
@@ -189,5 +189,29 @@ export class HUD extends AWUIScreen {
                 this.text.setY(121);
             }
         }
+    }
+
+    hideMiniGame(){
+        if (this.showAnimator){
+            removeFromUpdateables(this.showAnimator);
+        }
+        let t = 0;
+        new Animator ({time: 1.5}, (o: number) =>{
+            t = 1 - o;
+            this.targetHUD.setAlpha(t);
+            this.arrowHUD.setAlpha(t);
+            this.scalee.setAlpha(t);
+        });
+    }
+
+    animateMiniGames(){
+        let t = 0;
+        new LoopAnimator({time: 3}, (o: number) =>{
+            this.arrowHUD.setRotation(Math.sin(Math.PI * 2 * o) * DEG2RAD * 70);
+        });
+        new LoopAnimator({time: 0.2, delay: 1.5, loopInterval: 1.3}, (o: number) =>{
+            t = 0.25 + tweenInOut(o) * 0.1;
+            this.targetHUD.setSize(t, t, t);
+        });
     }
 }
