@@ -17,23 +17,25 @@ import {
     tweenInOut2,
 } from "playable-dev"
 import { Game } from "./Game"
-import { 
+import {
     Object3D,
     Vector2,
     Vector3,
     Color as ColorTHREE
- } from "three"
- import { StaticObject } from "./StaticObjects"
- import { DEG2RAD, RAD2DEG, randFloat, randInt } from "three/src/math/MathUtils"
- import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib"
- import { ArrowTrace } from "./ArrowTrace"
+} from "three"
+import { StaticObject } from "./StaticObjects"
+import { DEG2RAD, RAD2DEG, randFloat, randInt } from "three/src/math/MathUtils"
+import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib"
+import { ArrowTrace } from "./ArrowTrace"
 import { Setup } from "./Setup"
+import { GreenLine } from "./GreenLine"
+import { WhiteLine } from "./WhiteLine"
 
- const THROWS: number = 3;
- const RESTART_TIME_MILISECONDS: number = 2200;
- const ANIMATION_CHANGE_TIME: number = 1;
+const THROWS: number = 3;
+const RESTART_TIME_MILISECONDS: number = 2200;
+const ANIMATION_CHANGE_TIME: number = 1;
 
- export class Gameplay implements MouseListener {
+export class Gameplay implements MouseListener {
     mousePosition: Vector2 = new Vector2();
     z_order: number = 1;
     arrow?: Object3D;
@@ -43,7 +45,7 @@ import { Setup } from "./Setup"
     cameraStartPosition: Vector3 = new Vector3();
     lightStartPosition: Vector3 = new Vector3();
 
-    targetPosition: Vector3 =  new Vector3();
+    targetPosition: Vector3 = new Vector3();
     arrowMaxZPosition: number = 2;
     allowAnimation: boolean = false;
     StretchAnimation?: LoopAnimator;
@@ -56,6 +58,8 @@ import { Setup } from "./Setup"
     bowAnimation3!: SkeletonMesh;
     centerAnimation!: SkeletonMesh;
     failAnimation!: SkeletonMesh;
+    greenLine?: GreenLine;
+    whiteLine?: WhiteLine;
 
     sr: ScreenResizer;
     hitAnimationPlayed: boolean = false;
@@ -86,15 +90,15 @@ import { Setup } from "./Setup"
     playMusicAgainBlockade: boolean = false;
     hits: number = 0;
 
-    constructor(){
+    constructor() {
         this.sr = ScreenResizer.resizer;
         Engine.controlEvents.addListener(this);
-        if (!this.playMusicAgainBlockade){
+        if (!this.playMusicAgainBlockade) {
             this.playMusicAgainBlockade = true;
             this.music = playSndLoop("music", 0.2);
         }
 
-        if (Game.sessionCounter > 1){
+        if (Game.sessionCounter > 1) {
             return;
         }
 
@@ -114,32 +118,173 @@ import { Setup } from "./Setup"
 
     }
 
-    onPointerUp(event: MouseEvent) : boolean {
-        if (Setup.sipMode){
-            return true;
-        }
+    AnimationsPrepare() {
+        this.hitAnimation = new SkeletonMesh(<SkeletonData>Engine.assetsLib.lib["hit"]);
+        this.hitAnimation.renderOrder = 1001;
+        this.hitAnimation.scale.set(0.0005, 0.0005, 0);
+        this.hitAnimation.rotateX(-Math.PI / 10);
+        this.hitAnimation.visible = false;
+        this.hitAnimation.position.z -= 0.065
 
-        if (Game.sessionCounter > 1){
-            return true;
-        }
+        this.failAnimation = new SkeletonMesh(<SkeletonData>Engine.assetsLib.lib["fail"]);
+        this.failAnimation.renderOrder = 10;
+        this.failAnimation.scale.set(0.0005, 0.0005, 0);
+        this.failAnimation.visible = false;
+
+        this.centerAnimation = new SkeletonMesh(<SkeletonData>Engine.assetsLib.lib["strike"]);
+        this.centerAnimation.renderOrder = 10;
+        this.centerAnimation.scale.set(0.0005, 0.0005, 0);
+        this.centerAnimation.visible = false;
+
+        this.bowAnimation1 = new SkeletonMesh(
+            <SkeletonData>Engine.assetsLib.lib["whitefire"],
+            (materialParameters: THREE.ShaderMaterialParameters) => { }
+        );
+        this.bowAnimation1.renderOrder = 10;
+        this.bowAnimation1.scale.set(0.1, 0.1, 0);
+        this.startAnimationScale = this.bowAnimation1.scale.x;
+        this.bowAnimation1.scale.set(0, 0, 0);
+
+        Game.game.scene.add(this.hitAnimation);
+        Game.game.scene.add(this.failAnimation);
+        Game.game.scene.add(this.centerAnimation);
+
+        Game.game.scene.add(this.bowAnimation1);
+        this.bowAnimation1.state.setAnimation(0, "white", true).timeScale = 1.3;
+        this.bowAnimation1.rotateZ(RAD2DEG * 15);
+        this.bowAnimation1.renderOrder - 0.1;
         this.bowAnimation1.visible = true;
-        this.bowAnimation2.visible = true;
+        this.arrow?.layers.set(2);
+
+        this.bowAnimation2 = new SkeletonMesh(
+            <SkeletonData>Engine.assetsLib.lib["bluefire"],
+            (materialParameters: THREE.ShaderMaterialParameters) => { }
+        );
+        this.bowAnimation2.renderOrder = 10;
+        this.bowAnimation2.scale.set(0, 0, 0);
+
+        Game.game.scene.add(this.bowAnimation2);
+        this.bowAnimation2.state.setAnimation(0, "blue", true).timeScale = 1.3;
+        this.bowAnimation2.rotateZ(RAD2DEG * 15);
+        this.bowAnimation2.renderOrder = 0.1;
+        this.bowAnimation2.visible = false;
+
+        this.bowAnimation3 = new SkeletonMesh(
+            <SkeletonData>Engine.assetsLib.lib["redfire"],
+            (materialParameters: THREE.ShaderMaterialParameters) => { }
+        );
+        this.bowAnimation3.renderOrder = 10;
+        this.bowAnimation3.scale.set(0, 0, 0);
+
+        Game.game.scene.add(this.bowAnimation3);
+        this.bowAnimation3.state.setAnimation(0, "red", true).timeScale = 1.3;
+        this.bowAnimation3.rotateZ(RAD2DEG * 15);
+        this.bowAnimation3.renderOrder = 0.1;
         this.bowAnimation3.visible = true;
-        if (this.shooted || !this.arrowInBow){
+
+
+    }
+
+    onPointerUp(event: MouseEvent): boolean {
+        if (Setup.sipMode) {
             return true;
         }
-        //this.ResetPositions();
+        if (Game.sessionCounter > 1) {
+            return true;
+        }
+        this.bowAnimation1.visible = false;
+        this.bowAnimation2.visible = false;
+        this.bowAnimation3.visible = false;
+
+        if (this.shooted || !this.arrowInBow) {
+            return true;
+        }
+        this.ResetPositions();
         //this.ShootArrow();
         Game.game.hud.hideMiniGame();
-        if (!this.shooted){
+        if (!this.shooted) {
             Game.game.hud.showWhiteTutorial();
         }
         return true;
     }
 
-    onPointerDown(event: MouseEvent) : boolean {
+    onPointerDown(event: MouseEvent): boolean {
+        if (!this.interacted && Game.sessionCounter == 1) {
+            analytics.logEvent("interaction");
 
+            if (ScreenResizer.resizer.isMissclick(event.clientY)) {
+                analytics.logEvent("missclick_interraction");
+            }
+            this.interacted = true;
+        }
+
+        if (Game.sessionCounter > 1 || Setup.sipMode) {
+            ShopClick.click(event);
+            return true;
+        }
+
+        if (this.shooted) {
+            return true;
+        }
+
+        if (!this.shooted) {
+            Game.game.hud.showMiniGame();
+            if (!Game.game.hud.tutorialEnded) {
+                Game.game.hud.hideWhiteTutorial();
+            }
+        }
+
+        this.greenLine?.Show();
+        this.bowAnimation1.visible = true;
+        this.bowAnimation2.visible = true;
+        this.bowAnimation3.visible = true;
+        this.arrowInBow = true;
+        this.clickPosition = new Vector2(event.clientX, event.clientY);
         return true;
     }
-    
- }
+
+    onPointerMove(event: MouseEvent): boolean {
+        if (Setup.sipMode) {
+            return true;
+        }
+
+        if (this.shooted) {
+            return true;
+        }
+
+        this.mousePosition = new Vector2(event.clientX, event.clientY);
+        //this.StretchArrow();
+        return true;
+    }
+
+    onPointerCancel(event: MouseEvent): boolean {
+        if (Setup.sipMode) {
+            return true;
+        }
+
+        if (this.shooted) {
+            return true;
+        }
+
+        this.ResetPositions();
+        return true;
+    }
+
+    ResetPositions() {
+        this.arrowInBow = false;
+        this.clickPosition = new Vector2();
+        this.mousePosition = new Vector2();
+    }
+
+    // ------------------------------------------------------
+
+    Start() { }
+
+    ManageButtons() {
+        if (!this.arrow || !this.arrowInBow) {
+            return;
+        }
+    }
+
+
+}
