@@ -50,8 +50,8 @@ export class HUD extends AWUIScreen {
         Engine.ui.add(this);
         this.loadConfig("ShootingUI");
         this.scalee = this.getElement("scale");
-        this.arrowHUD = this.getElement("arrowHUD");
-        this.targetHUD = this.getElement("targetHUD");
+        this.arrowHUD = this.getElement("arrow");
+        this.targetHUD = this.getElement("target");
         
         this.hole = this.getElement("hole");
         this.top = this.getElement("top");
@@ -61,7 +61,7 @@ export class HUD extends AWUIScreen {
         this.hand = this.getElement("hand");
         this.text = this.getElement("text");
         this.whiteCircle = this.getElement("whiteCircle");
-        this.arrowShape = this.getElement("arrowShape");
+        this.arrowShape = this.getElement("ballShape");
 
         this.targetHUD.setAlpha(0);
         this.arrowHUD.setAlpha(0);

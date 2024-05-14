@@ -31,7 +31,7 @@ import { Setup } from "./Setup"
 import { GreenLine } from "./GreenLine"
 import { WhiteLine } from "./WhiteLine"
 
-const THROWS: number = 3;
+const SHOOTS: number = 3;
 const RESTART_TIME_MILISECONDS: number = 2200;
 const ANIMATION_CHANGE_TIME: number = 1;
 
@@ -401,5 +401,105 @@ export class Gameplay implements MouseListener {
         });
      }
 
+     ShootArrow() {
+        if (!this.arrow) {
+            return;
+        }
+
+        if (this.arrow.position.z < 0.1) {
+            //this.ResetObjectsPositions();
+            this.ResetPositions();
+    
+            this.ResetMaxStretchAnimation();
+            this.greenLine!.plane.visible = false;
+            this.whiteLine?.Hide();
+            return;
+        }
+
+        //PlaySound1
+        //PlaySound2
+        // const sound
+
+        this.arrowTrace?.start(0.6);
+        this.greenLine!.plane.visible = false;
+        this.whiteLine?.Hide();
+        this.shoots++;
+        this.shooted = true;
+        this.arrow.rotation.x = 0;
+        this.arrow.rotation.y = 0.25 * Math.PI * (this.arrowStartPosition.x - this.arrow.position.x);
+        const arrowCurving = -this.arrow.rotation.y;
+
+        let startPosition = this.arrow.position.clone();
+        let endPosition = StaticObject.targetObject.position.clone();
+        endPosition.x -= Game.game.hud.arrowHUD.rotation.z / 2.8;
+
+        const shieldPosition = StaticObject.targetObject.position;
+        endPosition.x += shieldPosition.x;
+        endPosition.y += shieldPosition.y;
+        endPosition.z += shieldPosition.z;
+
+        let startEndPointPositionZ = endPosition.z;
+
+        const timeOfRoad = 2.5 - this.arrow.position.z / 2;
+
+        new Animator({time: timeOfRoad}, (o: number) => {
+            endPosition.z = startEndPointPositionZ - 1.7 * o;
+        });
+
+        let speedRotation = 1000;
+        this.CameraAnimators(timeOfRoad);
+
+        new Animator({time: timeOfRoad}, (o:number) => {
+            if (!this.arrow) {
+                return;
+            }
+
+            speedRotation = 1000 - (960 - timeOfRoad * 4) * Math.pow(o, 0.05);
+            this.arrow.rotateX(
+                (this.arrow.position.z - this.arrowStartPosition.z - 2) / speedRotation
+            );
+
+            this.arrow.position.set(
+                startPosition.x * (1 - Math.pow(o,3)) +
+                endPosition.x * Math.pow(o,3) - 
+                Math.sin(Math.PI * (1 - o)) * arrowCurving * 1.8,
+                this.arrow.position.y,
+                startPosition.z * (1 - o) + endPosition.z * o
+            );
+
+            if (
+                this.arrow.position.z <= StaticObject.targetObject.position.z + shieldPosition.z + 1.6
+            ) {
+                //Tutaj nie wiem cos dać
+            }
+        
+
+        if (
+            this.arrow.position.z <= StaticObject.targetObject.position.z + shieldPosition.z + 0.6 &&
+            !this.hitAnimationPlayed
+        ) {
+            if (this.shoots == 1){
+                //play sound once
+            } else if (this.shoots == 2) {
+                //play sound once
+            } else if (this.shoots == 3) {
+                //play sound once
+            }
+            //this.HitTarget();
+        }
+
+        this.cameraDistance = 
+            this.startCameraDistance * (1 - Math.pow(o, 5)) + 0.4 * Math.pow(o, 5);
+            if (o >= 1){
+                if (this.shoots < SHOOTS) {
+                    //this.nextArrow();
+            }
+            }
+        });
+     }
+
+     ShowNextLevel(){
+        Engine.restartGame();
+     }
 
 }
