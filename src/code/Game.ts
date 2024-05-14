@@ -5,6 +5,7 @@ import { StaticObject } from "./StaticObjects";
 import CannonDebugRenderer from "./utils/cannonDebugRenderer";
 import { Guii } from "./Guii";
 import * as CANNON from "cannon-es"
+import { Gameplay } from "./Gameplay";
 
 //-------------------------------------------------------------
 
@@ -12,7 +13,7 @@ export class Game {
 	static game: Game;
 	static sessionCounter = 0;
 	scene: AWGLBScene;
-	//gameplay: Gameplay;
+	gameplay?: Gameplay;
 	cannonWorld: CANNON.World;
 	cannonDebugRenderer?: CannonDebugRenderer;
 	debugMode: boolean = false;

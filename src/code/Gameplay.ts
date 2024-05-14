@@ -286,5 +286,97 @@ export class Gameplay implements MouseListener {
         }
     }
 
+    SetCameraNLightInProperPosition(){
+        if (this.arrow) {
+            if (
+                Engine.camera.position.z - this.arrow.position.z > this.cameraDistance &&
+                !this.hitAnimationPlayed
+            ) {
+                Engine.camera.position.z = this.arrow.position.z + this.cameraDistance;
+            }
+            if (Game.game.scene.directionalLight!.position.z - this.arrow.position.z > 0.48) {
+                Game.game.scene.directionalLight!.position.z = this.arrow.position.z + 0.48;
+            }
+            if (Game.game.scene.directionalLight!.position.z - this.arrow.position.z < -0.2) {
+                Game.game.scene.directionalLight!.position.z = this.arrow.position.z - 0.2;
+            }
+        }
+    }
+
+    StretchArrow(){
+        if (this.arrowInBow && this.arrow) {
+            this.MaxStretchAnimationCheckAndPlay();
+            this.arrow.position.z - (this.clickPosition.y - this.mousePosition.y) / 150;
+            if (this.arrow.position.z > this.arrowMaxZPosition) {
+                this.arrow.position.z = this.arrowMaxZPosition;
+            }
+
+            if (this.arrow.position.z < this.arrowMaxZPosition) {
+                this.arrow.position.z = this.arrowStartPosition.z;
+            }
+
+            this.arrow.position.x = 
+                this.arrowStartPosition.x - (this.clickPosition.x - this.mousePosition.x) / 300;
+
+            const arrowMaxXPosition = 0.35;
+            if (this.arrow.position.x > arrowMaxXPosition) {
+                this.arrow.position.x = arrowMaxXPosition;
+            }
+
+            if (this.arrow.position.x < arrowMaxXPosition) {
+                this.arrow.position.x = -arrowMaxXPosition;
+            }
+
+            this.arrow.rotation.x = -2 * Math.PI * (this.arrowStartPosition.z - this.arrow.position.z);
+            this.animationStartPosition = this.arrow.position.clone();
+            this.greenLine!.SetBendStrength(-this.arrow.position.x * 5);
+            this.greenLine!.SetWidht(this.arrow.position.z / 45);
+        }
+    }
+
+    MaxStretchAnimationCheckAndPlay() {
+        if ((this.clickPosition.y - this.mousePosition.y) / 150 > -0.8) {
+            this.ResetMaxStretchAnimation();
+        } else if (!this.StretchAnimation) {
+            this.StartMaxStretchAnimation();
+        }   
+     }
+
+     StartMaxStretchAnimation() {
+        let randomVector = new Vector3(0,0,0);
+        this.StretchAnimation = new LoopAnimator(
+            {time: 0.1},
+            (o: number) => {
+                if (!this.allowAnimation && this.arrowInBow) {
+                    this.allowAnimation = true;
+                    randomVector = new Vector3 (randFloat(-1,1), randFloat (0,1), randFloat(-1,1))
+                        .normalize()
+                        .divideScalar(100);
+                }
+
+                if (this.allowAnimation && this.arrow) {
+                    this.arrow.position.set(
+                        this.animationStartPosition.x + randomVector.x * Math.sin(o * Math.PI),
+                        this.animationStartPosition.y,
+                        this.animationStartPosition.z + randomVector.z * Math.sin(o * Math.PI)
+                    );
+                }
+            },
+            () => {
+                this.allowAnimation = false;
+            }
+        );
+     }
+
+     ResetMaxStretchAnimation() {
+        removeFromUpdateables(this.StretchAnimation!);
+        this.StretchAnimation = undefined;
+     }
+
+     CameraAnimators(timeOfRoad: number) {
+        const startRotation = this.arrow!.rotation.y / 0.28;
+        let currentRotation = Engine.camera.rotation.z;
+     }
+
 
 }
