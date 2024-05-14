@@ -376,6 +376,29 @@ export class Gameplay implements MouseListener {
      CameraAnimators(timeOfRoad: number) {
         const startRotation = this.arrow!.rotation.y / 0.28;
         let currentRotation = Engine.camera.rotation.z;
+
+        new Animator({time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16}, (o: number) => {
+            Engine.camera.rotation.z = startRotation * 0.1 * tweenInOut(o);
+            if ( o >= 1) {
+                currentRotation = Engine.camera.rotation.z;
+            }
+        });
+
+        new Animator({time: timeOfRoad / 2, delay: timeOfRoad / 16}, (o: number) => {
+            Engine.camera.position.y = 0.864 * (1 - tweenIn2(o)) + 0.32 * tweenIn2(o);
+        });
+
+        new Animator({time: timeOfRoad / 2, delay: timeOfRoad / 2 + timeOfRoad / 16}, (o: number) => {
+            Engine.camera.position.y = 0.32 * (1 - tweenIn2(o)) + 0.564 * tweenIn2(o);
+        });
+
+        new Animator({time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16}, (o: number) => {
+            Engine.camera.position.x = startRotation * 0.5 * tweenInOut2(o);
+        });
+
+        new Animator({time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16}, (o: number) => {
+            Engine.camera.rotation.y = startRotation * DEG2RAD * 5 * tweenInOut2(o);
+        });
      }
 
 
