@@ -286,7 +286,7 @@ export class Gameplay implements MouseListener {
         }
     }
 
-    SetCameraNLightInProperPosition(){
+    SetCameraNLightInProperPosition() {
         if (this.arrow) {
             if (
                 Engine.camera.position.z - this.arrow.position.z > this.cameraDistance &&
@@ -303,7 +303,7 @@ export class Gameplay implements MouseListener {
         }
     }
 
-    StretchArrow(){
+    StretchArrow() {
         if (this.arrowInBow && this.arrow) {
             this.MaxStretchAnimationCheckAndPlay();
             this.arrow.position.z - (this.clickPosition.y - this.mousePosition.y) / 150;
@@ -315,7 +315,7 @@ export class Gameplay implements MouseListener {
                 this.arrow.position.z = this.arrowStartPosition.z;
             }
 
-            this.arrow.position.x = 
+            this.arrow.position.x =
                 this.arrowStartPosition.x - (this.clickPosition.x - this.mousePosition.x) / 300;
 
             const arrowMaxXPosition = 0.35;
@@ -339,17 +339,17 @@ export class Gameplay implements MouseListener {
             this.ResetMaxStretchAnimation();
         } else if (!this.StretchAnimation) {
             this.StartMaxStretchAnimation();
-        }   
-     }
+        }
+    }
 
-     StartMaxStretchAnimation() {
-        let randomVector = new Vector3(0,0,0);
+    StartMaxStretchAnimation() {
+        let randomVector = new Vector3(0, 0, 0);
         this.StretchAnimation = new LoopAnimator(
-            {time: 0.1},
+            { time: 0.1 },
             (o: number) => {
                 if (!this.allowAnimation && this.arrowInBow) {
                     this.allowAnimation = true;
-                    randomVector = new Vector3 (randFloat(-1,1), randFloat (0,1), randFloat(-1,1))
+                    randomVector = new Vector3(randFloat(-1, 1), randFloat(0, 1), randFloat(-1, 1))
                         .normalize()
                         .divideScalar(100);
                 }
@@ -366,42 +366,42 @@ export class Gameplay implements MouseListener {
                 this.allowAnimation = false;
             }
         );
-     }
+    }
 
-     ResetMaxStretchAnimation() {
+    ResetMaxStretchAnimation() {
         removeFromUpdateables(this.StretchAnimation!);
         this.StretchAnimation = undefined;
-     }
+    }
 
-     CameraAnimators(timeOfRoad: number) {
+    CameraAnimators(timeOfRoad: number) {
         const startRotation = this.arrow!.rotation.y / 0.28;
         let currentRotation = Engine.camera.rotation.z;
 
-        new Animator({time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16}, (o: number) => {
+        new Animator({ time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16 }, (o: number) => {
             Engine.camera.rotation.z = startRotation * 0.1 * tweenInOut(o);
-            if ( o >= 1) {
+            if (o >= 1) {
                 currentRotation = Engine.camera.rotation.z;
             }
         });
 
-        new Animator({time: timeOfRoad / 2, delay: timeOfRoad / 16}, (o: number) => {
+        new Animator({ time: timeOfRoad / 2, delay: timeOfRoad / 16 }, (o: number) => {
             Engine.camera.position.y = 0.864 * (1 - tweenIn2(o)) + 0.32 * tweenIn2(o);
         });
 
-        new Animator({time: timeOfRoad / 2, delay: timeOfRoad / 2 + timeOfRoad / 16}, (o: number) => {
+        new Animator({ time: timeOfRoad / 2, delay: timeOfRoad / 2 + timeOfRoad / 16 }, (o: number) => {
             Engine.camera.position.y = 0.32 * (1 - tweenIn2(o)) + 0.564 * tweenIn2(o);
         });
 
-        new Animator({time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16}, (o: number) => {
+        new Animator({ time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16 }, (o: number) => {
             Engine.camera.position.x = startRotation * 0.5 * tweenInOut2(o);
         });
 
-        new Animator({time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16}, (o: number) => {
+        new Animator({ time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16 }, (o: number) => {
             Engine.camera.rotation.y = startRotation * DEG2RAD * 5 * tweenInOut2(o);
         });
-     }
+    }
 
-     ShootArrow() {
+    ShootArrow() {
         if (!this.arrow) {
             return;
         }
@@ -409,7 +409,7 @@ export class Gameplay implements MouseListener {
         if (this.arrow.position.z < 0.1) {
             //this.ResetObjectsPositions();
             this.ResetPositions();
-    
+
             this.ResetMaxStretchAnimation();
             this.greenLine!.plane.visible = false;
             this.whiteLine?.Hide();
@@ -442,14 +442,14 @@ export class Gameplay implements MouseListener {
 
         const timeOfRoad = 2.5 - this.arrow.position.z / 2;
 
-        new Animator({time: timeOfRoad}, (o: number) => {
+        new Animator({ time: timeOfRoad }, (o: number) => {
             endPosition.z = startEndPointPositionZ - 1.7 * o;
         });
 
         let speedRotation = 1000;
         this.CameraAnimators(timeOfRoad);
 
-        new Animator({time: timeOfRoad}, (o:number) => {
+        new Animator({ time: timeOfRoad }, (o: number) => {
             if (!this.arrow) {
                 return;
             }
@@ -460,8 +460,8 @@ export class Gameplay implements MouseListener {
             );
 
             this.arrow.position.set(
-                startPosition.x * (1 - Math.pow(o,3)) +
-                endPosition.x * Math.pow(o,3) - 
+                startPosition.x * (1 - Math.pow(o, 3)) +
+                endPosition.x * Math.pow(o, 3) -
                 Math.sin(Math.PI * (1 - o)) * arrowCurving * 1.8,
                 this.arrow.position.y,
                 startPosition.z * (1 - o) + endPosition.z * o
@@ -472,34 +472,173 @@ export class Gameplay implements MouseListener {
             ) {
                 //Tutaj nie wiem cos dać
             }
-        
 
-        if (
-            this.arrow.position.z <= StaticObject.targetObject.position.z + shieldPosition.z + 0.6 &&
-            !this.hitAnimationPlayed
-        ) {
-            if (this.shoots == 1){
-                //play sound once
-            } else if (this.shoots == 2) {
-                //play sound once
-            } else if (this.shoots == 3) {
-                //play sound once
+
+            if (
+                this.arrow.position.z <= StaticObject.targetObject.position.z + shieldPosition.z + 0.6 &&
+                !this.hitAnimationPlayed
+            ) {
+                if (this.shoots == 1) {
+                    //play sound once
+                } else if (this.shoots == 2) {
+                    //play sound once
+                } else if (this.shoots == 3) {
+                    //play sound once
+                }
+                //this.HitTarget();
             }
-            //this.HitTarget();
-        }
 
-        this.cameraDistance = 
-            this.startCameraDistance * (1 - Math.pow(o, 5)) + 0.4 * Math.pow(o, 5);
-            if (o >= 1){
+            this.cameraDistance =
+                this.startCameraDistance * (1 - Math.pow(o, 5)) + 0.4 * Math.pow(o, 5);
+            if (o >= 1) {
                 if (this.shoots < SHOOTS) {
                     //this.nextArrow();
-            }
+                }
             }
         });
-     }
+    }
 
-     ShowNextLevel(){
+    ShowNextLevel() {
         Engine.restartGame();
-     }
+    }
+
+    HitTarget() {
+        //Trafienie do celu
+        if (this.arrow!.position.distanceTo(this.targetPosition) < 0.5) {
+            this.hitAnimation.visible = true;
+            this.hitAnimation.position.copy(this.targetPosition);
+            this.hitAnimation.state.setAnimation(0, "hit", false);
+            this.hitAnimation.state.addListener({
+                complete: () => {
+                    this.hitAnimation.visible = false;
+                },
+            });
+        } else {
+            //Pudło
+            this.hitAnimation.visible = false;
+            this.hitAnimation.position.copy(this.targetPosition);
+            this.hitAnimation.state.setAnimation(0, "fail", false);
+            this.hitAnimation.state.addListener({
+                complete: () => {
+                    this.hitAnimation.visible = false;
+                },
+            });
+            this.MoveCameraAfterHit();
+        }
+        this.shooted = true;
+
+    }
+
+    MoveCameraAfterHit() {
+        const startCameraPosition = Engine.camera.position.clone();
+        const finishCameraPosition = new Vector3(0, 1, 1);
+
+        new Animator({ time: RESTART_TIME_MILISECONDS / 1000 }, (o: number) => {
+            Engine.camera.position.set(
+                startCameraPosition.x * (1 - tweenIn(o)) + finishCameraPosition.x * tweenIn(o),
+                startCameraPosition.y * (1 - tweenIn(o)) + finishCameraPosition.y * tweenIn(o),
+                startCameraPosition.z * (1 - tweenIn(o)) + finishCameraPosition.z * tweenIn(o)
+            );
+        });
+        this.ShakeCamera(); //Wywołanie funkcji trzęsienia kamery
+    }
+
+    ShakeCamera() {
+        let startCameraRotation = Engine.camera.rotation.clone();
+        new Animator({ time: 0.2 }, (o: number) => {
+            Engine.camera.rotation.set(
+                startCameraRotation.x + Math.sin(o * Math.PI * 4) / 200,
+                startCameraRotation.y + Math.sin(o * Math.PI * 4) / 200,
+                startCameraRotation.z + Math.sin(o * Math.PI * 4) / 200
+            );
+        });
+    }
+
+    NextArrow() {
+        this.cameraActive = false;
+        this.hitAnimationPlayed = false;
+
+        this.cameraDistance = this.startCameraDistance;
+
+        setTimeout(() => {
+            const startCameraPosition = Engine.camera.position.clone();
+            let startCameraRotation = Engine.camera.rotation.clone();
+
+            new Animator({ time: RESTART_TIME_MILISECONDS / 1000 }, (o: number) => {
+                Engine.camera.position.set(
+                    startCameraPosition.x * (1 - tweenIn2(o)) +
+                    this.cameraStartPosition.x * tweenIn2(o),
+                    startCameraPosition.y * (1 - tweenIn2(o)) +
+                    this.cameraStartPosition.y * tweenIn2(o),
+                    startCameraPosition.z * (1 - tweenIn2(o)) +
+                    this.cameraStartPosition.z * tweenIn2(o)
+                );
+                Engine.camera.rotation.y = startCameraRotation.y * (1 - o);
+                Engine.camera.rotation.z = startCameraRotation.z * (1 - o);
+                if (o >= 1) {
+                    this.shooted = false;
+                    this.cameraActive = true;
+
+                    Game.game.hud.showWhiteTutorial();
+                }
+            });
+            this.ResetPositions();
+
+            this.ResetMaxStretchAnimation();
+        }, RESTART_TIME_MILISECONDS);
+    }
+
+    ResetObjectsPositions(littleStretchBlockade: boolean = false) {
+        if (!this.arrow) {
+            return true;
+        }
+
+        this.arrow.position.set(
+            this.arrowStartPosition.x,
+            this.arrowStartPosition.y,
+            this.arrowStartPosition.z
+        );
+
+        this.arrow?.layers.set(2);
+        StaticObject.shadow.visible = true;
+        if (!littleStretchBlockade) {
+            this.arrow.rotation.set(0, 0, 0);
+        }
+
+        this.bowAnimation1.scale.set(0,0,0);
+        this.bowAnimation2.scale.set(0,0,0);
+        this.bowAnimation3.scale.set(0,0,0);
+
+        this.firstAnimationCurrentScale = 0;
+        this.secondAnimationCurrentScale = 0;
+        this.thirdAnimationCurrentScale = 0;
+
+        this.secondAnimationStarted = false;
+        this.fistAnimationStarted = false;
+        this.thirdAnimationStarted = false;
+
+        if (this.firstAnimationTruning) {
+            removeFromUpdateables(this.firstAnimationTruning);
+        }
+
+        if (this.secondAnimationTurning) {
+            removeFromUpdateables(this.secondAnimationTurning);
+        }
+
+        if (this.thirdAnimationTurning) {
+            removeFromUpdateables(this.thirdAnimationTurning);
+        }
+        
+        Game.game.scene.directionalLight!.position.set(
+            this.lightStartPosition.x,
+            this.lightStartPosition.y,
+            this.lightStartPosition.z
+        );
+        this.animationStartPosition = this.arrow.position.clone();
+        this.greenLine!.SetBendStrength(0);
+    }
+
+
 
 }
+
