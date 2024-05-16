@@ -605,9 +605,9 @@ export class Gameplay implements MouseListener {
             this.arrow.rotation.set(0, 0, 0);
         }
 
-        this.bowAnimation1.scale.set(0,0,0);
-        this.bowAnimation2.scale.set(0,0,0);
-        this.bowAnimation3.scale.set(0,0,0);
+        this.bowAnimation1.scale.set(0, 0, 0);
+        this.bowAnimation2.scale.set(0, 0, 0);
+        this.bowAnimation3.scale.set(0, 0, 0);
 
         this.firstAnimationCurrentScale = 0;
         this.secondAnimationCurrentScale = 0;
@@ -628,7 +628,7 @@ export class Gameplay implements MouseListener {
         if (this.thirdAnimationTurning) {
             removeFromUpdateables(this.thirdAnimationTurning);
         }
-        
+
         Game.game.scene.directionalLight!.position.set(
             this.lightStartPosition.x,
             this.lightStartPosition.y,
@@ -638,6 +638,140 @@ export class Gameplay implements MouseListener {
         this.greenLine!.SetBendStrength(0);
     }
 
+    TurnOn1Animation() {
+        if (!this.fistAnimationStarted) {
+            this.fistAnimationStarted = true;
+
+            if (this.secondAnimationTurning) {
+                removeFromUpdateables(this.secondAnimationTurning);
+            }
+            if (this.thirdAnimationTurning) {
+                removeFromUpdateables(this.thirdAnimationTurning);
+            }
+
+            this.firstAnimationTruning = new Animator(
+                { time: ANIMATION_CHANGE_TIME },
+                (o: number) => {
+                    this.bowAnimation1.scale.set(
+                        this.startAnimationScale * Math.pow(o, 0.1),
+                        this.startAnimationScale * Math.pow(o, 0.1),
+                        this.startAnimationScale * Math.pow(o, 0.1)
+                    );
+                    this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
+                }
+            );
+            new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
+                this.bowAnimation2.scale.set(
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o, 5))
+                );
+                this.secondAnimationCurrentScale = this.bowAnimation2.scale.x;
+            });
+
+            new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
+                this.bowAnimation3.scale.set(
+                    this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5))
+                );
+                this.thirdAnimationCurrentScale = this.bowAnimation3.scale.x;
+            });
+        }
+        this.secondAnimationStarted = false;
+        this.thirdAnimationStarted = false;
+    }
+
+    TurnOn2Animation() {
+        if (!this.secondAnimationStarted) {
+            this.secondAnimationStarted = true;
+
+            if (this.firstAnimationTruning) {
+                removeFromUpdateables(this.firstAnimationTruning);
+            }
+            if (this.thirdAnimationTurning) {
+                removeFromUpdateables(this.thirdAnimationTurning);
+            }
+
+            this.secondAnimationTurning = new Animator(
+                {time: ANIMATION_CHANGE_TIME},
+                (o: number) => {
+                    this.bowAnimation2.scale.set(
+                        this.startAnimationScale * Math.pow(o, 0.1),
+                        this.startAnimationScale * Math.pow(o, 0.1),
+                        this.startAnimationScale * Math.pow(o, 0.1)
+                    );
+                    this.secondAnimationCurrentScale = this.bowAnimation2.scale.x;
+                }
+            );
+
+            new Animator ({time: ANIMATION_CHANGE_TIME}, (o: number) => {
+                this.bowAnimation1.scale.set(
+                    this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.firstAnimationCurrentScale * (1 - Math.pow(0, 5))
+                );
+                this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
+            });
+
+            new Animator({time: ANIMATION_CHANGE_TIME}, (o: number) =>{
+                this.bowAnimation3.scale.set(
+                    this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5))
+                );
+                this.thirdAnimationCurrentScale = this.bowAnimation3.scale.x;
+            });
+        }
+        this.secondAnimationStarted = false;
+        this.thirdAnimationStarted = false;
+    }
+
+    TurnOn3Animation(){
+        if (!this.thirdAnimationStarted){
+            this.thirdAnimationStarted = true;
+
+            if (this.firstAnimationTruning){
+                removeFromUpdateables(this.firstAnimationTruning);
+            }
+
+            if (this.secondAnimationTurning){
+                removeFromUpdateables(this.secondAnimationTurning);
+            }
+
+            this.thirdAnimationTurning = new Animator(
+                {time: ANIMATION_CHANGE_TIME},
+                (o: number) => {
+                    this.bowAnimation3.scale.set(
+                        this.startAnimationScale * Math.pow(o, 0.1),
+                        this.startAnimationScale * Math.pow(o, 0.1),
+                        this.startAnimationScale * Math.pow(o, 0.1)
+                    );
+                    this.thirdAnimationCurrentScale = this.bowAnimation3.scale.x;
+                }
+            );
+
+            new Animator({time: ANIMATION_CHANGE_TIME}, (o: number) => {
+                this.bowAnimation1.scale.set(
+                    this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.firstAnimationCurrentScale * (1 - Math.pow(o, 5))
+                );
+                this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
+            });
+
+            new Animator({time: ANIMATION_CHANGE_TIME}, (o: number) =>{
+                this.bowAnimation2.scale.set(
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o ,5)),
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o, 5))
+                );
+                this.secondAnimationCurrentScale = this.bowAnimation2.scale.x;
+            });
+        }
+        this.fistAnimationStarted = false;
+        this.secondAnimationStarted = false;
+    }
 
 
 }
