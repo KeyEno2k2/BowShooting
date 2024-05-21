@@ -30,6 +30,7 @@ import { ArrowTrace } from "./ArrowTrace"
 import { Setup } from "./Setup"
 import { GreenLine } from "./GreenLine"
 import { WhiteLine } from "./WhiteLine"
+import { Target } from "./Target"
 
 const SHOOTS: number = 3;
 const RESTART_TIME_MILISECONDS: number = 2200;
@@ -45,7 +46,7 @@ export class Gameplay implements MouseListener {
     cameraStartPosition: Vector3 = new Vector3();
     lightStartPosition: Vector3 = new Vector3();
 
-    targetPosition: Vector3 = new Vector3();
+    targetPosition: Vector3[] = [];
     arrowMaxZPosition: number = 2;
     allowAnimation: boolean = false;
     StretchAnimation?: LoopAnimator;
@@ -60,6 +61,7 @@ export class Gameplay implements MouseListener {
     failAnimation!: SkeletonMesh;
     greenLine?: GreenLine;
     whiteLine?: WhiteLine;
+    targetGetHit: boolean = true;
 
     sr: ScreenResizer;
     hitAnimationPlayed: boolean = false;
@@ -468,9 +470,11 @@ export class Gameplay implements MouseListener {
             );
 
             if (
-                this.arrow.position.z <= StaticObject.targetObject.position.z + shieldPosition.z + 1.6
+                this.arrow.position.z <= StaticObject.targetCircle.position.z + shieldPosition.z + 1.6
             ) {
-                //Tutaj nie wiem cos dać
+                StaticObject.targets.forEach((target) => {
+                    target.targetBody?.wakeUp();
+                });
             }
 
 
@@ -485,14 +489,14 @@ export class Gameplay implements MouseListener {
                 } else if (this.shoots == 3) {
                     //play sound once
                 }
-                //this.HitTarget();
+                this.HitTarget();
             }
 
             this.cameraDistance =
                 this.startCameraDistance * (1 - Math.pow(o, 5)) + 0.4 * Math.pow(o, 5);
             if (o >= 1) {
                 if (this.shoots < SHOOTS) {
-                    //this.nextArrow();
+                    this.NextArrow();
                 }
             }
         });
@@ -504,29 +508,75 @@ export class Gameplay implements MouseListener {
 
     HitTarget() {
         //Trafienie do celu
-        if (this.arrow!.position.distanceTo(this.targetPosition) < 0.5) {
-            this.hitAnimation.visible = true;
-            this.hitAnimation.position.copy(this.targetPosition);
-            this.hitAnimation.state.setAnimation(0, "hit", false);
-            this.hitAnimation.state.addListener({
-                complete: () => {
-                    this.hitAnimation.visible = false;
-                },
-            });
-        } else {
-            //Pudło
-            this.hitAnimation.visible = false;
-            this.hitAnimation.position.copy(this.targetPosition);
-            this.hitAnimation.state.setAnimation(0, "fail", false);
-            this.hitAnimation.state.addListener({
-                complete: () => {
-                    this.hitAnimation.visible = false;
-                },
-            });
-            this.MoveCameraAfterHit();
-        }
-        this.shooted = true;
+        this.hitAnimationPlayed = true;
+        this.hitAnimation.visible = true;
+        this.arrowTrace?.end();
 
+        this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 1.2;
+        new Animator({time: 1.7}, (o: number) => {
+            if (o >= 1) {
+                StaticObject.targets.forEach((target) => {
+                    if (target.targetView.clone().translateY(0.2).position.y > 0.375) {
+                        this.targetGetHit = false;
+                    }
+                });
+                if (this.targetGetHit) {
+                    this.hits++;
+                }
+                this.PlayHitAnimation();
+                this.targetGetHit = true;
+            }
+        });
+        this.MoveCameraAfterHit();
+    }
+
+    PlayHitAnimation() {
+        if (!this.targetGetHit) {
+            this.failAnimation.visible = true;
+            this.failAnimation.state.setAnimation(0, "fail", false).timeScale = 0.5;
+            this.hits = 0;
+            if (this.shoots == 3) {
+                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
+                    if (o >= 1) {
+                        analytics.logEvent("game_ended");
+                        this.ShowNextLevel();
+                    }
+                });
+            }
+        } else if ((this.shoots == 1 || this.hits == 1) && this.targetGetHit) {
+            this.hitAnimation.visible = true;
+            this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
+            if (this.shoots == 3) {
+                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
+                    if (o >= 1){
+                        analytics.logEvent("game_ended");
+                        this.ShowNextLevel();
+                    }
+                });
+            }
+        } else if ((this.shoots == 2 || this.hits == 2) && this.targetGetHit) {
+            this.hitAnimation.visible = true;
+            this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
+            if (this.shoots == 3) {
+                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
+                    if (o >= 1 ) {
+                        analytics.logEvent("game_ended");
+                        this.ShowNextLevel();
+                    }
+                });
+            }
+        }  else if ((this.shoots == 3 || this.hits == 3) && this.targetGetHit) {
+            this.hitAnimation.visible = true;
+            this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
+            if (this.shoots == 3) {
+                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
+                    if (o >= 1){
+                        analytics.logEvent("game_ended");
+                        this.ShowNextLevel();
+                    }
+                });
+            }
+        }
     }
 
     MoveCameraAfterHit() {
@@ -638,6 +688,7 @@ export class Gameplay implements MouseListener {
         this.greenLine!.SetBendStrength(0);
     }
 
+
     TurnOn1Animation() {
         if (!this.fistAnimationStarted) {
             this.fistAnimationStarted = true;
@@ -694,7 +745,7 @@ export class Gameplay implements MouseListener {
             }
 
             this.secondAnimationTurning = new Animator(
-                {time: ANIMATION_CHANGE_TIME},
+                { time: ANIMATION_CHANGE_TIME },
                 (o: number) => {
                     this.bowAnimation2.scale.set(
                         this.startAnimationScale * Math.pow(o, 0.1),
@@ -705,7 +756,7 @@ export class Gameplay implements MouseListener {
                 }
             );
 
-            new Animator ({time: ANIMATION_CHANGE_TIME}, (o: number) => {
+            new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
                 this.bowAnimation1.scale.set(
                     this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
                     this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
@@ -714,7 +765,7 @@ export class Gameplay implements MouseListener {
                 this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
             });
 
-            new Animator({time: ANIMATION_CHANGE_TIME}, (o: number) =>{
+            new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
                 this.bowAnimation3.scale.set(
                     this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
                     this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
@@ -727,20 +778,20 @@ export class Gameplay implements MouseListener {
         this.thirdAnimationStarted = false;
     }
 
-    TurnOn3Animation(){
-        if (!this.thirdAnimationStarted){
+    TurnOn3Animation() {
+        if (!this.thirdAnimationStarted) {
             this.thirdAnimationStarted = true;
 
-            if (this.firstAnimationTruning){
+            if (this.firstAnimationTruning) {
                 removeFromUpdateables(this.firstAnimationTruning);
             }
 
-            if (this.secondAnimationTurning){
+            if (this.secondAnimationTurning) {
                 removeFromUpdateables(this.secondAnimationTurning);
             }
 
             this.thirdAnimationTurning = new Animator(
-                {time: ANIMATION_CHANGE_TIME},
+                { time: ANIMATION_CHANGE_TIME },
                 (o: number) => {
                     this.bowAnimation3.scale.set(
                         this.startAnimationScale * Math.pow(o, 0.1),
@@ -751,7 +802,7 @@ export class Gameplay implements MouseListener {
                 }
             );
 
-            new Animator({time: ANIMATION_CHANGE_TIME}, (o: number) => {
+            new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
                 this.bowAnimation1.scale.set(
                     this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
                     this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
@@ -760,9 +811,9 @@ export class Gameplay implements MouseListener {
                 this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
             });
 
-            new Animator({time: ANIMATION_CHANGE_TIME}, (o: number) =>{
+            new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
                 this.bowAnimation2.scale.set(
-                    this.secondAnimationCurrentScale * (1 - Math.pow(o ,5)),
+                    this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
                     this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
                     this.secondAnimationCurrentScale * (1 - Math.pow(o, 5))
                 );
@@ -773,6 +824,136 @@ export class Gameplay implements MouseListener {
         this.secondAnimationStarted = false;
     }
 
+    update(delta: number): void {
+        if (this.arrow && StaticObject.shadow) {
+            if (this.arrow!.position.z < -19) {
+                if (StaticObject.shadow.visible) {
+                    StaticObject.shadow.visible = false;
+                    this.arrow?.layers.set(0);
+                }
+                this.arrow!.position.y -= delta * 2.5;
+            }
+        }
 
+        this.ManageButtons();
+
+
+        if (this.arrow && StaticObject.shadow && this.greenLine) {
+            StaticObject.shadow.position.set(
+                this.arrow.position.x - 0.1,
+                StaticObject.shadow.position.y,
+                this.arrow.position.z - 0.03
+            );
+        }
+
+        if (this.shooted && this.arrow) {
+            StaticObject.arrowCollider?.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y,
+                this.arrow.position.z
+            );
+        }
+
+        if (this.cameraActive) {
+            this.SetCameraNLightInProperPosition();
+        }
+
+        if (this.failAnimation && this.arrow) {
+            this.failAnimation.update(delta);
+            this.failAnimation.position.set(
+                Engine.camera.position.x,
+                Engine.camera.position.y + 0.15,
+                Engine.camera.position.z + 0.5
+            );
+        }
+
+        if (this.hitAnimation && this.arrow) {
+            this.hitAnimation.update(delta);
+            this.hitAnimation.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y + 0.15,
+                this.arrow.position.z + 0.5
+            );
+        }
+
+        if (this.whiteLine && this.arrow!.position.z < 0.1 && this.whiteLine.plane.visible) {
+            this.whiteLine.Hide();
+        } else if (
+            this.whiteLine &&
+            this.arrow!.position.z > 0.1 &&
+            !this.whiteLine.plane.visible &&
+            !this.shooted
+        ) {
+            this.whiteLine.Show();
+        }
+
+        if (this.whiteLine) {
+            this.whiteLine.updateShape();
+        }
+
+        if (this.arrowTrace && this.arrow) {
+            this.arrowTrace.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y - 0.1,
+                this.arrow.position.z
+            );
+        }
+
+        if (this.bowAnimation1 && this.arrow) {
+            this.bowAnimation1.update(delta);
+            this.bowAnimation1.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y,
+                this.arrow.position.z
+            );
+            this.bowAnimation1.lookAt(Engine.camera.position);
+            if (this.bowAnimation1.children[0] && !this.layerChanged1) {
+                this.layerChanged1 = true;
+                this.bowAnimation1.children[0].layers.set(2);
+            }
+        }
+
+        if (this.bowAnimation2 && this.arrow) {
+            this.bowAnimation2.update(delta);
+            this.bowAnimation2.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y,
+                this.arrow.position.z 
+            );
+            this.bowAnimation2.lookAt(Engine.camera.position);
+            if (this.bowAnimation2.children[0] && !this.layerChanged2){
+                this.layerChanged2 = true;
+                this.bowAnimation2.children[0].layers.set(2);
+            }
+        }
+
+        if (this.bowAnimation3 && this.arrow) {
+            this.bowAnimation3.update(delta);
+            this.bowAnimation3.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y,
+                this.arrow.position.z
+            );
+            this.bowAnimation3.lookAt(Engine.camera.position);
+            if (this.bowAnimation3.children[0] && !this.layerchanged3) {
+                this.layerchanged3 = true;
+                this.bowAnimation3.children[0].layers.set(2);
+            }
+        }
+
+        if (this.arrow && this.arrowInBow) {
+            if (this.arrow.position.z < 0.25){
+                this.TurnOn1Animation();
+            } else if (this.arrow.position.z < 0.6) {
+                this.TurnOn2Animation();
+            } else if (this.arrow.position.z < 1) {
+                this.TurnOn3Animation();
+            }
+        }
+
+        if (this.arrowTrace) {
+            this.arrowTrace.update(delta);
+        }
+    }
 }
 
