@@ -96,8 +96,8 @@ export class Gameplay implements MouseListener {
         this.sr = ScreenResizer.resizer;
         Engine.controlEvents.addListener(this);
         if (!this.playMusicAgainBlockade) {
-            this.playMusicAgainBlockade = true;
-            this.music = playSndLoop("music", 0.2);
+            //this.playMusicAgainBlockade = true;
+            //this.music = playSndLoop("music", 0.2);
         }
 
         if (Game.sessionCounter > 1) {
@@ -255,7 +255,7 @@ export class Gameplay implements MouseListener {
         }
 
         this.mousePosition = new Vector2(event.clientX, event.clientY);
-        //this.StretchArrow();
+        this.StretchArrow();
         return true;
     }
 
@@ -409,7 +409,7 @@ export class Gameplay implements MouseListener {
         }
 
         if (this.arrow.position.z < 0.1) {
-            //this.ResetObjectsPositions();
+            this.ResetObjectsPositions();
             this.ResetPositions();
 
             this.ResetMaxStretchAnimation();
@@ -836,6 +836,23 @@ export class Gameplay implements MouseListener {
         }
 
         this.ManageButtons();
+        if (!this.updateTargetColliderBlockade) {
+            StaticObject.targets.forEach((target) => {
+                if (target.targetView && target.targetBody) {
+                    target.targetView.position.set(
+                        target.targetBody!.position.x - StaticObject.targetObject.position.x,
+                        target.targetBody!.position.y - StaticObject.targetObject.position.y,
+                        target.targetBody!.position.z - StaticObject.targetObject.position.z
+                    );
+                    target.targetView.quaternion.set(
+                        target.targetBody!.quaternion.x,
+                        target.targetBody!.quaternion.y,
+                        target.targetBody!.quaternion.z,
+                        target.targetBody!.quaternion.w
+                    );
+                }
+            });
+        }
 
 
         if (this.arrow && StaticObject.shadow && this.greenLine) {

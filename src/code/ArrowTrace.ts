@@ -31,8 +31,8 @@ import {
             const length = 20.0;
             const width = 5;
             const trailGeometry = new PlaneGeometry(width, length, 1, 100);
-            this.trailMap = libTex("trailTxt");
-            this.trailMap.generateMipmaps = false;
+           // this.trailMap = libTex("trailTxt");
+           // this.trailMap.generateMipmaps = false;
     
             // Create a ShaderMaterial
             const uniforms = UniformsUtils.merge([

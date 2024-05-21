@@ -6,6 +6,7 @@ import CannonDebugRenderer from "./utils/cannonDebugRenderer";
 import { Guii } from "./Guii";
 import * as CANNON from "cannon-es"
 import { Gameplay } from "./Gameplay";
+import { Environment } from "./Environment";
 
 //-------------------------------------------------------------
 
@@ -38,8 +39,8 @@ export class Game {
 		this.cannonWorld.gravity.set(0, -9.82, 0);
 
 		new StaticObject();
-		//new Environment();
-		//this.gameplay = new Gameplay();
+		new Environment();
+		this.gameplay = new Gameplay();
 
 		if(Game.sessionCounter == 1){
 			analytics.logEvent("start");
@@ -54,7 +55,13 @@ export class Game {
 
 	//---------------------------------------------------------
 
-	update(delta: number): void {}
+	update(delta: number): void {
+		this.gameplay?.update(delta);
+		this.cannonWorld.step(delta / 6, delta, 10);
+		if (this.debugMode && this.cannonDebugRenderer) {
+			this.cannonDebugRenderer.update();
+		}
+	}
 
 	//---------------------------------------------------------
 

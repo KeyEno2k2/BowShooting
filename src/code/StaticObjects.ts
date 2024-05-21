@@ -10,24 +10,29 @@ export class StaticObject {
     static arrow: Object3D;
     static arrowCollider?: CANNON.Body;
     static shadow: Object3D;
-    static targetCircle : Object3D;
+    static targetCircle: Object3D;
 
     constructor() {
         StaticObject.bow = Game.game.scene.getObjectByName("Mesh")!;
         StaticObject.shadow = Game.game.scene.getObjectByName("Shadow")!;
         StaticObject.targetObject = Game.game.scene.getObjectByName("target")!;
         StaticObject.arrow = Game.game.scene.getObjectByName("model_arrow_modern_4")!;
-        StaticObject.targetCircle = Game.game.scene.getObjectByName("target_yellow")!;
+        StaticObject.targetCircle = Game.game.scene.getObjectByName("target_yelow")!;
 
         this.AddTargetByName("target_black");
         this.AddTargetByName("target_blue");
         this.AddTargetByName("target_red");
         this.AddTargetByName("target_white");
-        this.AddTargetByName("target_yellow");
+        this.AddTargetByName("target_yelow");
     }
 
-    AddTargetByName(name: string){
-        const newTarget = new Target(Game.game.scene.getObjectByName(name) as Object3D);
+    AddTargetByName(name: string) {
+        const targetObject = Game.game.scene.getObjectByName(name) as Object3D;
+        if (!targetObject) {
+            console.error(`Object with name ${name} not found in the scene.`);
+            return;
+        }
+        const newTarget = new Target(targetObject);
         StaticObject.targets.push(newTarget);
     }
 }
