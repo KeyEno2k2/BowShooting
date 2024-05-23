@@ -21,7 +21,11 @@ import {
     Object3D,
     Vector2,
     Vector3,
-    Color as ColorTHREE
+    Color as ColorTHREE,
+    AnimationMixer,
+    AnimationAction,
+    LoopRepeat,
+    LoopOnce
 } from "three"
 import { StaticObject } from "./StaticObjects"
 import { DEG2RAD, RAD2DEG, randFloat, randInt } from "three/src/math/MathUtils"
@@ -31,6 +35,7 @@ import { Setup } from "./Setup"
 import { GreenLine } from "./GreenLine"
 import { WhiteLine } from "./WhiteLine"
 import { Target } from "./Target"
+import { GLTF } from "playable-dev/assets-lib";
 
 const SHOOTS: number = 3;
 const RESTART_TIME_MILISECONDS: number = 2200;
@@ -39,12 +44,16 @@ const ANIMATION_CHANGE_TIME: number = 1;
 export class Gameplay implements MouseListener {
     mousePosition: Vector2 = new Vector2();
     z_order: number = 1;
-    arrow?: Object3D;
+    arrow!: Object3D;
+    sceneFile: GLTF | undefined;
     clickPosition: Vector2 = new Vector2();
     arrowInBow: boolean = false;
     arrowStartPosition: Vector3 = new Vector3();
     cameraStartPosition: Vector3 = new Vector3();
     lightStartPosition: Vector3 = new Vector3();
+    mixer!: AnimationMixer;
+    animation!: AnimationAction;
+    bow!: Object3D;
 
     targetPosition: Vector3[] = [];
     arrowMaxZPosition: number = 2;
@@ -104,8 +113,10 @@ export class Gameplay implements MouseListener {
             return;
         }
 
+        this.sceneFile = Engine.assetsLib.lib["sceneGlb"] as GLTF;
         this.arrow = StaticObject.arrow;
         this.arrow.renderOrder = 1;
+        this.bow = StaticObject.bow;
 
         this.arrowStartPosition = this.arrow.position.clone();
 
@@ -117,6 +128,7 @@ export class Gameplay implements MouseListener {
 
         this.cameraDistance = Engine.camera.position.z - this.arrow.position.z;
         this.startCameraDistance = this.cameraDistance;
+        this.LoadAnimations();
 
     }
 
@@ -197,12 +209,13 @@ export class Gameplay implements MouseListener {
         this.bowAnimation1.visible = false;
         this.bowAnimation2.visible = false;
         this.bowAnimation3.visible = false;
+        this.animation.enabled = false;
 
         if (this.shooted || !this.arrowInBow) {
             return true;
         }
         this.ResetPositions();
-        //this.ShootArrow();
+        this.ShootArrow();
         Game.game.hud.hideMiniGame();
         if (!this.shooted) {
             Game.game.hud.showWhiteTutorial();
@@ -228,6 +241,9 @@ export class Gameplay implements MouseListener {
         if (this.shooted) {
             return true;
         }
+
+        this.animation.enabled = true;
+        this.animation.reset();
 
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
@@ -500,6 +516,7 @@ export class Gameplay implements MouseListener {
                 }
             }
         });
+
     }
 
     ShowNextLevel() {
@@ -824,6 +841,8 @@ export class Gameplay implements MouseListener {
         this.secondAnimationStarted = false;
     }
 
+
+
     update(delta: number): void {
         if (this.arrow && StaticObject.shadow) {
             if (this.arrow!.position.z < -19) {
@@ -854,6 +873,7 @@ export class Gameplay implements MouseListener {
             });
         }
 
+        this.mixer.update(delta);
 
         if (this.arrow && StaticObject.shadow && this.greenLine) {
             StaticObject.shadow.position.set(
@@ -972,5 +992,23 @@ export class Gameplay implements MouseListener {
             this.arrowTrace.update(delta);
         }
     }
+
+    //Ładowanie Animacji z pliku GLB/GLTF
+    LoadAnimations(){
+        this.mixer = new AnimationMixer(this.bow!);
+        this.sceneFile!.animations.forEach((animationClip) => {
+            //console.log(animationClip.name);
+            if (animationClip.name == "Anim_shoot"){
+                this.animation = this.mixer.clipAction(animationClip);
+                //this.animation.setLoop(LoopRepeat, Infinity);
+                this.animation.setLoop(LoopOnce, Infinity);
+                this.animation.play();
+                this.animation.enabled = false;
+                console.log("działa");
+            }
+        }
+    )}
+
+
 }
 
