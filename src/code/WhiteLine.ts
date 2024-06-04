@@ -40,6 +40,7 @@ export class WhiteLine {
 	constructor(ballStartPosition: Vector3) {
 		this.shape = new PlaneGeometry(this.width, 1, this.geometryWidth, this.geometryHeight);
 		this.pointB = ballStartPosition.clone();
+		
 
 		const map = libTex("WHITE_STRIPE_PASEK_3");
 		map.repeat.set(1, 1);

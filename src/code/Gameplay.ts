@@ -117,10 +117,16 @@ export class Gameplay implements MouseListener {
         this.arrow = StaticObject.arrow;
         this.arrow.renderOrder = 1;
         this.bow = StaticObject.bow;
+        
 
         this.arrowStartPosition = this.arrow.position.clone();
 
-        this.cameraStartPosition = Engine.camera.position.clone();
+        //this.cameraStartPosition = Engine.camera.position.clone();
+        Engine.camera.position.x = 15;
+        Engine.camera.position.y = 0;
+        Engine.camera.position.z = -3.75;
+        Engine.camera.rotation.y = 1.5;
+        
 
         this.lightStartPosition = Game.game.scene.directionalLight!.position.clone();
 
@@ -163,39 +169,12 @@ export class Gameplay implements MouseListener {
         Game.game.scene.add(this.failAnimation);
         Game.game.scene.add(this.centerAnimation);
 
-        Game.game.scene.add(this.bowAnimation1);
-        this.bowAnimation1.state.setAnimation(0, "white", true).timeScale = 1.3;
-        this.bowAnimation1.rotateZ(RAD2DEG * 15);
-        this.bowAnimation1.renderOrder - 0.1;
-        this.bowAnimation1.visible = true;
-        this.arrow?.layers.set(2);
-
-        this.bowAnimation2 = new SkeletonMesh(
-            <SkeletonData>Engine.assetsLib.lib["bluefire"],
-            (materialParameters: THREE.ShaderMaterialParameters) => { }
-        );
-        this.bowAnimation2.renderOrder = 10;
-        this.bowAnimation2.scale.set(0, 0, 0);
-
-        Game.game.scene.add(this.bowAnimation2);
-        this.bowAnimation2.state.setAnimation(0, "blue", true).timeScale = 1.3;
-        this.bowAnimation2.rotateZ(RAD2DEG * 15);
-        this.bowAnimation2.renderOrder = 0.1;
-        this.bowAnimation2.visible = false;
-
-        this.bowAnimation3 = new SkeletonMesh(
-            <SkeletonData>Engine.assetsLib.lib["redfire"],
-            (materialParameters: THREE.ShaderMaterialParameters) => { }
-        );
-        this.bowAnimation3.renderOrder = 10;
-        this.bowAnimation3.scale.set(0, 0, 0);
-
-        Game.game.scene.add(this.bowAnimation3);
-        this.bowAnimation3.state.setAnimation(0, "red", true).timeScale = 1.3;
-        this.bowAnimation3.rotateZ(RAD2DEG * 15);
-        this.bowAnimation3.renderOrder = 0.1;
-        this.bowAnimation3.visible = true;
-
+        // Game.game.scene.add(this.bowAnimation1);
+        // this.bowAnimation1.state.setAnimation(0, "white", true).timeScale = 1.3;
+        // this.bowAnimation1.rotateZ(RAD2DEG * 15);
+        // this.bowAnimation1.renderOrder - 0.1;
+        // this.bowAnimation1.visible = true;
+        // this.arrow?.layers.set(2);
 
     }
 
@@ -207,8 +186,6 @@ export class Gameplay implements MouseListener {
             return true;
         }
         this.bowAnimation1.visible = false;
-        this.bowAnimation2.visible = false;
-        this.bowAnimation3.visible = false;
         this.animation.enabled = false;
 
         if (this.shooted || !this.arrowInBow) {
@@ -242,6 +219,21 @@ export class Gameplay implements MouseListener {
             return true;
         }
 
+        let currentArrowPosition = new Vector3;
+        const startDistance = 0.3;
+        const endDistance = 9.7;
+        const arrowSpeed = 1;
+        const duration = this.animation.getClip().duration; //Manipulacja
+        new Animator ({time: duration * 0.6}, (o: number) =>{
+            this.arrow.position.z = this.arrowStartPosition.z + startDistance * o;
+            if (o >= 1){
+                currentArrowPosition = this.arrow.position.clone();
+            }
+        });
+        new Animator ({time: arrowSpeed, delay: duration - 0.5}, (o: number) =>{
+            this.arrow.position.z = currentArrowPosition.z - endDistance * o;
+        });
+    
         this.animation.enabled = true;
         this.animation.reset();
 
@@ -254,8 +246,6 @@ export class Gameplay implements MouseListener {
 
         this.greenLine?.Show();
         this.bowAnimation1.visible = true;
-        this.bowAnimation2.visible = true;
-        this.bowAnimation3.visible = true;
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
         return true;
@@ -436,7 +426,7 @@ export class Gameplay implements MouseListener {
 
         //PlaySound1
         //PlaySound2
-        // const sound
+        //const sound
 
         this.arrowTrace?.start(0.6);
         this.greenLine!.plane.visible = false;
@@ -1004,7 +994,10 @@ export class Gameplay implements MouseListener {
                 this.animation.setLoop(LoopOnce, Infinity);
                 this.animation.play();
                 this.animation.enabled = false;
-                console.log("działa");
+                //console.log("działa");
+
+                //Czas Trwania Animacji
+                //console.log(this.animation.getClip().duration);
             }
         }
     )}

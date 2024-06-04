@@ -74,9 +74,16 @@ export class HUD extends AWUIScreen {
 
         this.hand.layers.set(2);
         this.whiteCircle.layers.set(2);
+        
+        //this.showMiniGame().rotation.z = -1.55;
     }
 
     showMiniGame(){
+        this.scalee.rotation.z = -1.55;
+        this.targetHUD.position.x = 40;
+        this.targetHUD.position.y = 40;
+        this.arrowHUD.position.x = -40;
+        this.arrowHUD.position.y = 40;
         this.showAnimator = new Animator({time: 0.3}, (o: number) => {
             this.targetHUD.setAlpha(o);
             this.arrowHUD.setAlpha(o);
@@ -105,6 +112,7 @@ export class HUD extends AWUIScreen {
         this.tutorialEnded = false;
         this.hand.visible = false;
         this.whiteCircle.visible = false;
+
 
         new Animator ({time: 0.1}, (o: number) => {
             this.hand.setAlpha(o);
@@ -166,7 +174,6 @@ export class HUD extends AWUIScreen {
                 } else {
                     this.whiteCircle.setY(-45 - 200 * tweenInOut(o));
                 }
-
                 this.hand.setY(this.whiteCircle.position.y);
             },
             () => {
@@ -207,7 +214,7 @@ export class HUD extends AWUIScreen {
     animateMiniGames(){
         let t = 0;
         new LoopAnimator({time: 3}, (o: number) =>{
-            this.arrowHUD.setRotation(Math.sin(Math.PI * 2 * o) * DEG2RAD * 70);
+            this.arrowHUD.setRotation((Math.sin(Math.PI * 2 * o) * DEG2RAD * 70) - 90 * DEG2RAD) ;
         });
         new LoopAnimator({time: 0.2, delay: 1.5, loopInterval: 1.3}, (o: number) =>{
             t = 0.25 + tweenInOut(o) * 0.1;
