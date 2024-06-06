@@ -25,7 +25,8 @@ import {
     AnimationMixer,
     AnimationAction,
     LoopRepeat,
-    LoopOnce
+    LoopOnce,
+    PerspectiveCamera
 } from "three"
 import { StaticObject } from "./StaticObjects"
 import { DEG2RAD, RAD2DEG, randFloat, randInt } from "three/src/math/MathUtils"
@@ -54,6 +55,7 @@ export class Gameplay implements MouseListener {
     mixer!: AnimationMixer;
     animation!: AnimationAction;
     bow!: Object3D;
+    camera!: PerspectiveCamera;
 
     targetPosition: Vector3[] = [];
     arrowMaxZPosition: number = 2;
@@ -99,7 +101,8 @@ export class Gameplay implements MouseListener {
     playMusicAgainBlockade: boolean = false;
     hits: number = 0;
 
-    constructor() {
+    constructor(camera: PerspectiveCamera) {
+        this.camera = camera;
         this.sr = ScreenResizer.resizer;
         Engine.controlEvents.addListener(this);
         if (!this.playMusicAgainBlockade) {
@@ -423,10 +426,6 @@ export class Gameplay implements MouseListener {
             this.whiteLine?.Hide();
             return;
         }
-
-        //PlaySound1
-        //PlaySound2
-        //const sound
 
         this.arrowTrace?.start(0.6);
         this.greenLine!.plane.visible = false;
@@ -830,6 +829,10 @@ export class Gameplay implements MouseListener {
     //     this.secondAnimationStarted = false;
     // }
 
+    InitializeArrow(arrow: Object3D): void {
+        this.arrow = arrow;
+        console.log("Zainicjalizowano Strzałę", this.arrow);
+    }
 
 
     update(delta: number): void {
@@ -842,6 +845,19 @@ export class Gameplay implements MouseListener {
                 this.arrow!.position.y -= delta * 2.5;
             }
         }
+
+        // if (this.arrow) {
+        //     const arrowPosition = this.arrow.position;
+        //     if (arrowPosition) {
+        //         this.camera.position.lerp(new Vector3(arrowPosition.x, arrowPosition.y + 5, arrowPosition.z - 10), 0.1);
+        //         this.camera.lookAt(arrowPosition);
+        //     } else {
+        //         console.warn("Arrow object exists but has no position");
+        //     }
+        // } else {
+        //     console.warn("Arrow object is not initialized");
+        // }
+
 
         this.ManageButtons();
         if (!this.updateTargetColliderBlockade) {
