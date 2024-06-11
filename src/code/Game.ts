@@ -1,5 +1,5 @@
-import { AWGLBScene, analytics, GUIOverlay } from "playable-dev";
-import { Vector3 } from "three";
+import { AWGLBScene, analytics, GUIOverlay, Engine } from "playable-dev";
+import { PerspectiveCamera, Vector3 } from "three";
 import { HUD } from "./HUD";
 import { StaticObject } from "./StaticObjects";
 import CannonDebugRenderer from "./utils/cannonDebugRenderer";
@@ -40,7 +40,7 @@ export class Game {
 
 		new StaticObject();
 		new Environment();
-		this.gameplay = new Gameplay();
+		this.gameplay = new Gameplay(Engine.camera as PerspectiveCamera);
 
 		if(Game.sessionCounter == 1){
 			analytics.logEvent("start");

@@ -118,6 +118,7 @@ export class Gameplay implements MouseListener {
 
         this.animation.enabled = true;
         this.animation.reset();
+        this.animation.play(); // Upewnij się, że animacja jest odtwarzana
 
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
@@ -215,10 +216,39 @@ export class Gameplay implements MouseListener {
                 this.animation.setLoop(LoopOnce, Infinity);
                 this.animation.play();
                 this.animation.enabled = false;
+    
+                // Dodanie obserwatora na zdarzenie zakończenia odtwarzania animacji
+                this.mixer.addEventListener('finished', (event) => {
+                    if (event.action === this.animation) {
+                        this.shooted = true; // Ustawienie shooted na true po zakończeniu animacji
+                        console.log("Ustawienie Wartości Shooted na:", this.shooted);
+                    }
+
+                    if (this.shoots < SHOOTS){
+                        setTimeout(() => {
+                            this.ResetScene();
+                            this.PrepareNextShot();
+                        }, RESTART_TIME_MILLISECONDS);
+                    } else {
+                        setTimeout(()=>{
+                            this.ShowNextLevel();
+                        }, RESTART_TIME_MILLISECONDS);
+                    }
+                });
             }
         });
     }
     
-
+    ResetScene(){
+        this.animation.stop(); // Zatrzymaj animację strzału
+        this.arrow.position.copy(this.arrowStartPosition); // Przywróć początkową pozycję strzały
+    }
     
+    PrepareNextShot(){
+        this.shoots++; // Inkrementuj liczbę wykonanych strzałów
+        this.shooted = false; // Zresetuj flagę strzału
+        this.arrow.position.copy(this.arrowStartPosition); // Przywróć początkową pozycję strzały
+        this.animation.reset(); // Zresetuj animację strzału
+        this.animation.enabled = true; // Włącz animację strzału
+    }
 }
