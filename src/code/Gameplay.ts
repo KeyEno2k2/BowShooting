@@ -168,12 +168,6 @@ export class Gameplay implements MouseListener {
         Game.game.scene.add(this.failAnimation);
         Game.game.scene.add(this.centerAnimation);
 
-        // Game.game.scene.add(this.bowAnimation);
-        // this.bowAnimation.state.setAnimation(0, "white", true).timeScale = 1.3;
-        // this.bowAnimation.rotateZ(RAD2DEG * 15);
-        // this.bowAnimation.renderOrder - 0.1;
-        // this.bowAnimation.visible = true;
-        // this.arrow?.layers.set(2);
 
     }
 
@@ -191,7 +185,6 @@ export class Gameplay implements MouseListener {
             return true;
         }
         this.ResetPositions();
-        this.ShootArrow();
         Game.game.hud.hideMiniGame();
         if (!this.shooted) {
             Game.game.hud.showWhiteTutorial();
@@ -202,58 +195,57 @@ export class Gameplay implements MouseListener {
     onPointerDown(event: MouseEvent): boolean {
         if (!this.interacted && Game.sessionCounter == 1) {
             analytics.logEvent("interaction");
-
+    
             if (ScreenResizer.resizer.isMissclick(event.clientY)) {
                 analytics.logEvent("missclick_interraction");
             }
             this.interacted = true;
         }
-
+    
         if (Game.sessionCounter > 1 || Setup.sipMode) {
             ShopClick.click(event);
             return true;
         }
-
+    
         if (this.shooted) {
             return true;
         }
-
+    
         let currentArrowPosition = new Vector3;
         const startDistance = 0.3;
         const endDistance = 9.7;
         const arrowSpeed = 0.7;
         const duration = this.animation.getClip().duration;
-
-        new Animator ({time: duration * 0.6}, (o: number) =>{
+    
+        new Animator({ time: duration * 0.6 }, (o: number) => {
             this.arrow.position.z = this.arrowStartPosition.z + startDistance * o;
-            if (o >= 1){
+            if (o >= 1) {
                 currentArrowPosition = this.arrow.position.clone();
-                //this.shooted = true;
             }
         });
-        new Animator ({time: arrowSpeed, delay: duration - 0.5}, (o: number) =>{
+    
+        new Animator({ time: arrowSpeed, delay: duration - 0.5 }, (o: number) => {
             this.arrow.position.z = currentArrowPosition.z - endDistance * o;
             this.shooted = true;
         });
     
         this.animation.enabled = true;
         this.animation.reset();
-
-
+    
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
             if (!Game.game.hud.tutorialEnded) {
                 Game.game.hud.hideWhiteTutorial();
             }
         }
-
+    
         this.greenLine?.Show();
         this.bowAnimation.visible = true;
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
         return true;
     }
-
+    
     onPointerMove(event: MouseEvent): boolean {
         if (Setup.sipMode) {
             return true;
@@ -264,7 +256,7 @@ export class Gameplay implements MouseListener {
         }
 
         this.mousePosition = new Vector2(event.clientX, event.clientY);
-        this.StretchArrow();
+        //this.StretchArrow();
         return true;
     }
 
@@ -297,536 +289,41 @@ export class Gameplay implements MouseListener {
         }
     }
 
-    SetCameraNLightInProperPosition() {
-        if (this.arrow) {
-            if (
-                Engine.camera.position.z - this.arrow.position.z > this.cameraDistance &&
-                !this.hitAnimationPlayed
-            ) {
-                Engine.camera.position.z = this.arrow.position.z + this.cameraDistance;
-            }
-            if (Game.game.scene.directionalLight!.position.z - this.arrow.position.z > 0.48) {
-                Game.game.scene.directionalLight!.position.z = this.arrow.position.z + 0.48;
-            }
-            if (Game.game.scene.directionalLight!.position.z - this.arrow.position.z < -0.2) {
-                Game.game.scene.directionalLight!.position.z = this.arrow.position.z - 0.2;
-            }
-        }
-    }
-
-    StretchArrow() {
-        if (this.arrowInBow && this.arrow) {
-            this.MaxStretchAnimationCheckAndPlay();
-            this.arrow.position.z - (this.clickPosition.y - this.mousePosition.y) / 150;
-            if (this.arrow.position.z > this.arrowMaxZPosition) {
-                this.arrow.position.z = this.arrowMaxZPosition;
-            }
-
-            if (this.arrow.position.z < this.arrowMaxZPosition) {
-                this.arrow.position.z = this.arrowStartPosition.z;
-            }
-
-            this.arrow.position.x =
-                this.arrowStartPosition.x - (this.clickPosition.x - this.mousePosition.x) / 300;
-
-            const arrowMaxXPosition = 0.35;
-            if (this.arrow.position.x > arrowMaxXPosition) {
-                this.arrow.position.x = arrowMaxXPosition;
-            }
-
-            if (this.arrow.position.x < arrowMaxXPosition) {
-                this.arrow.position.x = -arrowMaxXPosition;
-            }
-
-            this.arrow.rotation.x = -2 * Math.PI * (this.arrowStartPosition.z - this.arrow.position.z);
-            this.animationStartPosition = this.arrow.position.clone();
-            this.greenLine!.SetBendStrength(-this.arrow.position.x * 5);
-            this.greenLine!.SetWidht(this.arrow.position.z / 45);
-        }
-    }
-
-    MaxStretchAnimationCheckAndPlay() {
-        if ((this.clickPosition.y - this.mousePosition.y) / 150 > -0.8) {
-            this.ResetMaxStretchAnimation();
-        } else if (!this.StretchAnimation) {
-            this.StartMaxStretchAnimation();
-        }
-    }
-
-    StartMaxStretchAnimation() {
-        let randomVector = new Vector3(0, 0, 0);
-        this.StretchAnimation = new LoopAnimator(
-            { time: 0.1 },
-            (o: number) => {
-                if (!this.allowAnimation && this.arrowInBow) {
-                    this.allowAnimation = true;
-                    randomVector = new Vector3(randFloat(-1, 1), randFloat(0, 1), randFloat(-1, 1))
-                        .normalize()
-                        .divideScalar(100);
-                }
-
-                if (this.allowAnimation && this.arrow) {
-                    this.arrow.position.set(
-                        this.animationStartPosition.x + randomVector.x * Math.sin(o * Math.PI),
-                        this.animationStartPosition.y,
-                        this.animationStartPosition.z + randomVector.z * Math.sin(o * Math.PI)
-                    );
-                }
-            },
-            () => {
-                this.allowAnimation = false;
-            }
-        );
-    }
-
-    ResetMaxStretchAnimation() {
-        removeFromUpdateables(this.StretchAnimation!);
-        this.StretchAnimation = undefined;
-    }
-
-    CameraAnimators(timeOfRoad: number) {
-        const startRotation = this.arrow!.rotation.y / 0.28;
-        let currentRotation = Engine.camera.rotation.z;
-
-        new Animator({ time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16 }, (o: number) => {
-            Engine.camera.rotation.z = startRotation * 0.1 * tweenInOut(o);
-            if (o >= 1) {
-                currentRotation = Engine.camera.rotation.z;
-            }
-        });
-
-        new Animator({ time: timeOfRoad / 2, delay: timeOfRoad / 16 }, (o: number) => {
-            Engine.camera.position.y = 0.864 * (1 - tweenIn2(o)) + 0.32 * tweenIn2(o);
-        });
-
-        new Animator({ time: timeOfRoad / 2, delay: timeOfRoad / 2 + timeOfRoad / 16 }, (o: number) => {
-            Engine.camera.position.y = 0.32 * (1 - tweenIn2(o)) + 0.564 * tweenIn2(o);
-        });
-
-        new Animator({ time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16 }, (o: number) => {
-            Engine.camera.position.x = startRotation * 0.5 * tweenInOut2(o);
-        });
-
-        new Animator({ time: timeOfRoad - timeOfRoad / 8, delay: timeOfRoad / 16 }, (o: number) => {
-            Engine.camera.rotation.y = startRotation * DEG2RAD * 5 * tweenInOut2(o);
-        });
-    }
-
-    ShootArrow() {
-        if (!this.arrow) {
-            return;
-        }
-
-        if (this.arrow.position.z < 0.1) {
-            this.ResetObjectsPositions();
-            this.ResetPositions();
-
-            this.ResetMaxStretchAnimation();
-            this.greenLine!.plane.visible = false;
-            this.whiteLine?.Hide();
-            return;
-        }
-
-        this.arrowTrace?.start(0.6);
-        this.greenLine!.plane.visible = false;
-        this.whiteLine?.Hide();
-        this.shoots++;
-        this.shooted = true;
-        this.arrow.rotation.x = 0;
-        this.arrow.rotation.y = 0.25 * Math.PI * (this.arrowStartPosition.x - this.arrow.position.x);
-        const arrowCurving = -this.arrow.rotation.y;
-
-        let startPosition = this.arrow.position.clone();
-        let endPosition = StaticObject.targetObject.position.clone();
-        endPosition.x -= Game.game.hud.arrowHUD.rotation.z / 2.8;
-
-        const shieldPosition = StaticObject.targetObject.position;
-        endPosition.x += shieldPosition.x;
-        endPosition.y += shieldPosition.y;
-        endPosition.z += shieldPosition.z;
-
-        let startEndPointPositionZ = endPosition.z;
-
-        const timeOfRoad = 2.5 - this.arrow.position.z / 2;
-
-        new Animator({ time: timeOfRoad }, (o: number) => {
-            endPosition.z = startEndPointPositionZ - 1.7 * o;
-        });
-
-        let speedRotation = 1000;
-        this.CameraAnimators(timeOfRoad);
-
-        new Animator({ time: timeOfRoad }, (o: number) => {
-            if (!this.arrow) {
-                return;
-            }
-
-            speedRotation = 1000 - (960 - timeOfRoad * 4) * Math.pow(o, 0.05);
-            this.arrow.rotateX(
-                (this.arrow.position.z - this.arrowStartPosition.z - 2) / speedRotation
-            );
-
-            this.arrow.position.set(
-                startPosition.x * (1 - Math.pow(o, 3)) +
-                endPosition.x * Math.pow(o, 3) -
-                Math.sin(Math.PI * (1 - o)) * arrowCurving * 1.8,
-                this.arrow.position.y,
-                startPosition.z * (1 - o) + endPosition.z * o
-            );
-
-            if (
-                this.arrow.position.z <= StaticObject.targetCircle.position.z + shieldPosition.z + 1.6
-            ) {
-                StaticObject.targets.forEach((target) => {
-                    target.targetBody?.wakeUp();
-                });
-            }
-
-
-            if (
-                this.arrow.position.z <= StaticObject.targetObject.position.z + shieldPosition.z + 0.6 &&
-                !this.hitAnimationPlayed
-            ) {
-                if (this.shoots == 1) {
-                    //play sound once
-                } else if (this.shoots == 2) {
-                    //play sound once
-                } else if (this.shoots == 3) {
-                    //play sound once
-                }
-                this.HitTarget();
-            }
-
-            this.cameraDistance =
-                this.startCameraDistance * (1 - Math.pow(o, 5)) + 0.4 * Math.pow(o, 5);
-            if (o >= 1) {
-                if (this.shoots < SHOOTS) {
-                    this.NextArrow();
-                }
-            }
-        });
-
-    }
-
     ShowNextLevel() {
         Engine.restartGame();
     }
 
-    HitTarget() {
-        //Trafienie do celu
-        this.hitAnimationPlayed = true;
-        this.hitAnimation.visible = true;
-        this.arrowTrace?.end();
-
-        this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 1.2;
-        new Animator({time: 1.7}, (o: number) => {
-            if (o >= 1) {
-                StaticObject.targets.forEach((target) => {
-                    if (target.targetView.clone().translateY(0.2).position.y > 0.375) {
-                        this.targetGetHit = false;
-                    }
-                });
-                if (this.targetGetHit) {
-                    this.hits++;
-                }
-                this.PlayHitAnimation();
-                this.targetGetHit = true;
-            }
-        });
-        this.MoveCameraAfterHit();
-    }
-
-    PlayHitAnimation() {
-        if (!this.targetGetHit) {
-            this.failAnimation.visible = true;
-            this.failAnimation.state.setAnimation(0, "fail", false).timeScale = 0.5;
-            this.hits = 0;
-            if (this.shoots == 3) {
-                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
-                    if (o >= 1) {
-                        analytics.logEvent("game_ended");
-                        this.ShowNextLevel();
-                    }
-                });
-            }
-        } else if ((this.shoots == 1 || this.hits == 1) && this.targetGetHit) {
-            this.hitAnimation.visible = true;
-            this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
-            if (this.shoots == 3) {
-                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
-                    if (o >= 1){
-                        analytics.logEvent("game_ended");
-                        this.ShowNextLevel();
-                    }
-                });
-            }
-        } else if ((this.shoots == 2 || this.hits == 2) && this.targetGetHit) {
-            this.hitAnimation.visible = true;
-            this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
-            if (this.shoots == 3) {
-                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
-                    if (o >= 1 ) {
-                        analytics.logEvent("game_ended");
-                        this.ShowNextLevel();
-                    }
-                });
-            }
-        }  else if ((this.shoots == 3 || this.hits == 3) && this.targetGetHit) {
-            this.hitAnimation.visible = true;
-            this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
-            if (this.shoots == 3) {
-                new Animator({time: RESTART_TIME_MILISECONDS / 1000}, (o: number) => {
-                    if (o >= 1){
-                        analytics.logEvent("game_ended");
-                        this.ShowNextLevel();
-                    }
-                });
-            }
-        }
-    }
-
-    MoveCameraAfterHit() {
-        const startCameraPosition = Engine.camera.position.clone();
-        const finishCameraPosition = new Vector3(0, 1, 1);
-
-        new Animator({ time: RESTART_TIME_MILISECONDS / 1000 }, (o: number) => {
-            Engine.camera.position.set(
-                startCameraPosition.x * (1 - tweenIn(o)) + finishCameraPosition.x * tweenIn(o),
-                startCameraPosition.y * (1 - tweenIn(o)) + finishCameraPosition.y * tweenIn(o),
-                startCameraPosition.z * (1 - tweenIn(o)) + finishCameraPosition.z * tweenIn(o)
-            );
-        });
-        this.ShakeCamera(); //Wywołanie funkcji trzęsienia kamery
-    }
-
-    ShakeCamera() {
-        let startCameraRotation = Engine.camera.rotation.clone();
-        new Animator({ time: 0.2 }, (o: number) => {
-            Engine.camera.rotation.set(
-                startCameraRotation.x + Math.sin(o * Math.PI * 4) / 200,
-                startCameraRotation.y + Math.sin(o * Math.PI * 4) / 200,
-                startCameraRotation.z + Math.sin(o * Math.PI * 4) / 200
-            );
-        });
-    }
-
-    NextArrow() {
-        this.cameraActive = false;
-        this.hitAnimationPlayed = false;
-
-        this.cameraDistance = this.startCameraDistance;
-
-        setTimeout(() => {
-            const startCameraPosition = Engine.camera.position.clone();
-            let startCameraRotation = Engine.camera.rotation.clone();
-
-            new Animator({ time: RESTART_TIME_MILISECONDS / 1000 }, (o: number) => {
-                Engine.camera.position.set(
-                    startCameraPosition.x * (1 - tweenIn2(o)) +
-                    this.cameraStartPosition.x * tweenIn2(o),
-                    startCameraPosition.y * (1 - tweenIn2(o)) +
-                    this.cameraStartPosition.y * tweenIn2(o),
-                    startCameraPosition.z * (1 - tweenIn2(o)) +
-                    this.cameraStartPosition.z * tweenIn2(o)
-                );
-                Engine.camera.rotation.y = startCameraRotation.y * (1 - o);
-                Engine.camera.rotation.z = startCameraRotation.z * (1 - o);
-                if (o >= 1) {
-                    this.shooted = false;
-                    this.cameraActive = true;
-
-                    Game.game.hud.showWhiteTutorial();
-                }
-            });
-            this.ResetPositions();
-
-            this.ResetMaxStretchAnimation();
-        }, RESTART_TIME_MILISECONDS);
-    }
-
-    ResetObjectsPositions(littleStretchBlockade: boolean = false) {
-        if (!this.arrow) {
-            return true;
-        }
-
-        this.arrow.position.set(
-            this.arrowStartPosition.x,
-            this.arrowStartPosition.y,
-            this.arrowStartPosition.z
-        );
-
-        this.arrow?.layers.set(2);
-        StaticObject.shadow.visible = true;
-        if (!littleStretchBlockade) {
-            this.arrow.rotation.set(0, 0, 0);
-        }
-
-        this.bowAnimation.scale.set(0, 0, 0);
-
-
-        this.firstAnimationCurrentScale = 0;
-        this.secondAnimationCurrentScale = 0;
-        this.thirdAnimationCurrentScale = 0;
-
-        this.secondAnimationStarted = false;
-        this.fistAnimationStarted = false;
-        this.thirdAnimationStarted = false;
-
-        if (this.firstAnimationTruning) {
-            removeFromUpdateables(this.firstAnimationTruning);
-        }
-
-        if (this.secondAnimationTurning) {
-            removeFromUpdateables(this.secondAnimationTurning);
-        }
-
-        if (this.thirdAnimationTurning) {
-            removeFromUpdateables(this.thirdAnimationTurning);
-        }
-
-        Game.game.scene.directionalLight!.position.set(
-            this.lightStartPosition.x,
-            this.lightStartPosition.y,
-            this.lightStartPosition.z
-        );
-        this.animationStartPosition = this.arrow.position.clone();
-        this.greenLine!.SetBendStrength(0);
-    }
-
-
-    // TurnOn1Animation() {
-    //     if (!this.fistAnimationStarted) {
-    //         this.fistAnimationStarted = true;
-
-    //         if (this.secondAnimationTurning) {
-    //             removeFromUpdateables(this.secondAnimationTurning);
+ 
+    // PlayHitAnimation() {
+    //     if (!this.targetGetHit) {
+    //         this.failAnimation.visible = true;
+    //         this.failAnimation.state.setAnimation(0, "fail", false).timeScale = 0.5;
+    //         this.hits = 0;
+    //         if (this.shoots == 3) {
+    //             setTimeout(() => {
+    //                 analytics.logEvent("game_ended");
+    //                 this.ShowNextLevel();
+    //             }, 5000);  // 5000 ms = 5 seconds
     //         }
-    //         if (this.thirdAnimationTurning) {
-    //             removeFromUpdateables(this.thirdAnimationTurning);
+    //     } else if ((this.shoots == 1 || this.hits == 1) && this.targetGetHit) {
+    //         this.hitAnimation.visible = true;
+    //         this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
+    //         if (this.shoots == 3) {
+    //             setTimeout(() => {
+    //                 analytics.logEvent("game_ended");
+    //                 this.ShowNextLevel();
+    //             }, 5000);  // 5000 ms = 5 seconds
     //         }
-
-    //         this.firstAnimationTruning = new Animator(
-    //             { time: ANIMATION_CHANGE_TIME },
-    //             (o: number) => {
-    //                 this.bowAnimation1.scale.set(
-    //                     this.startAnimationScale * Math.pow(o, 0.1),
-    //                     this.startAnimationScale * Math.pow(o, 0.1),
-    //                     this.startAnimationScale * Math.pow(o, 0.1)
-    //                 );
-    //                 this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
-    //             }
-    //         );
-    //         new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
-    //             this.bowAnimation2.scale.set(
-    //                 this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.secondAnimationCurrentScale * (1 - Math.pow(o, 5))
-    //             );
-    //             this.secondAnimationCurrentScale = this.bowAnimation2.scale.x;
-    //         });
-
-    //         new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
-    //             this.bowAnimation3.scale.set(
-    //                 this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5))
-    //             );
-    //             this.thirdAnimationCurrentScale = this.bowAnimation3.scale.x;
-    //         });
+    //     } else if ((this.shoots == 2 || this.hits == 2) && this.targetGetHit) {
+    //         this.hitAnimation.visible = true;
+    //         this.hitAnimation.state.setAnimation(0, "hit", false).timeScale = 0.5;
+    //         if (this.shoots == 3) {
+    //             setTimeout(() => {
+    //                 analytics.logEvent("game_ended");
+    //                 this.ShowNextLevel();
+    //             }, 5000);  // 5000 ms = 5 seconds
+    //         }
     //     }
-    //     this.secondAnimationStarted = false;
-    //     this.thirdAnimationStarted = false;
-    // }
-
-    // TurnOn2Animation() {
-    //     if (!this.secondAnimationStarted) {
-    //         this.secondAnimationStarted = true;
-
-    //         if (this.firstAnimationTruning) {
-    //             removeFromUpdateables(this.firstAnimationTruning);
-    //         }
-    //         if (this.thirdAnimationTurning) {
-    //             removeFromUpdateables(this.thirdAnimationTurning);
-    //         }
-
-    //         this.secondAnimationTurning = new Animator(
-    //             { time: ANIMATION_CHANGE_TIME },
-    //             (o: number) => {
-    //                 this.bowAnimation2.scale.set(
-    //                     this.startAnimationScale * Math.pow(o, 0.1),
-    //                     this.startAnimationScale * Math.pow(o, 0.1),
-    //                     this.startAnimationScale * Math.pow(o, 0.1)
-    //                 );
-    //                 this.secondAnimationCurrentScale = this.bowAnimation2.scale.x;
-    //             }
-    //         );
-
-    //         new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
-    //             this.bowAnimation1.scale.set(
-    //                 this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.firstAnimationCurrentScale * (1 - Math.pow(0, 5))
-    //             );
-    //             this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
-    //         });
-
-    //         new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
-    //             this.bowAnimation3.scale.set(
-    //                 this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.thirdAnimationCurrentScale * (1 - Math.pow(o, 5))
-    //             );
-    //             this.thirdAnimationCurrentScale = this.bowAnimation3.scale.x;
-    //         });
-    //     }
-    //     this.secondAnimationStarted = false;
-    //     this.thirdAnimationStarted = false;
-    // }
-
-    // TurnOn3Animation() {
-    //     if (!this.thirdAnimationStarted) {
-    //         this.thirdAnimationStarted = true;
-
-    //         if (this.firstAnimationTruning) {
-    //             removeFromUpdateables(this.firstAnimationTruning);
-    //         }
-
-    //         if (this.secondAnimationTurning) {
-    //             removeFromUpdateables(this.secondAnimationTurning);
-    //         }
-
-    //         this.thirdAnimationTurning = new Animator(
-    //             { time: ANIMATION_CHANGE_TIME },
-    //             (o: number) => {
-    //                 this.bowAnimation3.scale.set(
-    //                     this.startAnimationScale * Math.pow(o, 0.1),
-    //                     this.startAnimationScale * Math.pow(o, 0.1),
-    //                     this.startAnimationScale * Math.pow(o, 0.1)
-    //                 );
-    //                 this.thirdAnimationCurrentScale = this.bowAnimation3.scale.x;
-    //             }
-    //         );
-
-    //         new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
-    //             this.bowAnimation1.scale.set(
-    //                 this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.firstAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.firstAnimationCurrentScale * (1 - Math.pow(o, 5))
-    //             );
-    //             this.firstAnimationCurrentScale = this.bowAnimation1.scale.x;
-    //         });
-
-    //         new Animator({ time: ANIMATION_CHANGE_TIME }, (o: number) => {
-    //             this.bowAnimation2.scale.set(
-    //                 this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.secondAnimationCurrentScale * (1 - Math.pow(o, 5)),
-    //                 this.secondAnimationCurrentScale * (1 - Math.pow(o, 5))
-    //             );
-    //             this.secondAnimationCurrentScale = this.bowAnimation2.scale.x;
-    //         });
-    //     }
-    //     this.fistAnimationStarted = false;
-    //     this.secondAnimationStarted = false;
     // }
 
     InitializeArrow(arrow: Object3D): void {
@@ -845,19 +342,6 @@ export class Gameplay implements MouseListener {
                 this.arrow!.position.y -= delta * 2.5;
             }
         }
-
-        // if (this.arrow) {
-        //     const arrowPosition = this.arrow.position;
-        //     if (arrowPosition) {
-        //         this.camera.position.lerp(new Vector3(arrowPosition.x, arrowPosition.y + 5, arrowPosition.z - 10), 0.1);
-        //         this.camera.lookAt(arrowPosition);
-        //     } else {
-        //         console.warn("Arrow object exists but has no position");
-        //     }
-        // } else {
-        //     console.warn("Arrow object is not initialized");
-        // }
-
 
         this.ManageButtons();
         if (!this.updateTargetColliderBlockade) {
@@ -894,10 +378,6 @@ export class Gameplay implements MouseListener {
                 this.arrow.position.y,
                 this.arrow.position.z
             );
-        }
-
-        if (this.cameraActive) {
-            this.SetCameraNLightInProperPosition();
         }
 
         if (this.failAnimation && this.arrow) {
@@ -954,44 +434,6 @@ export class Gameplay implements MouseListener {
                 this.bowAnimation.children[0].layers.set(2);
             }
         }
-
-        // if (this.bowAnimation2 && this.arrow) {
-        //     this.bowAnimation2.update(delta);
-        //     this.bowAnimation2.position.set(
-        //         this.arrow.position.x,
-        //         this.arrow.position.y,
-        //         this.arrow.position.z 
-        //     );
-        //     this.bowAnimation2.lookAt(Engine.camera.position);
-        //     if (this.bowAnimation2.children[0] && !this.layerChanged2){
-        //         this.layerChanged2 = true;
-        //         this.bowAnimation2.children[0].layers.set(2);
-        //     }
-        // }
-
-        // if (this.bowAnimation3 && this.arrow) {
-        //     this.bowAnimation3.update(delta);
-        //     this.bowAnimation3.position.set(
-        //         this.arrow.position.x,
-        //         this.arrow.position.y,
-        //         this.arrow.position.z
-        //     );
-        //     this.bowAnimation3.lookAt(Engine.camera.position);
-        //     if (this.bowAnimation3.children[0] && !this.layerchanged3) {
-        //         this.layerchanged3 = true;
-        //         this.bowAnimation3.children[0].layers.set(2);
-        //     }
-        // }
-
-        // if (this.arrow && this.arrowInBow) {
-        //     if (this.arrow.position.z < 0.25){
-        //         this.TurnOn1Animation();
-        //     } else if (this.arrow.position.z < 0.6) {
-        //         this.TurnOn2Animation();
-        //     } else if (this.arrow.position.z < 1) {
-        //         this.TurnOn3Animation();
-        //     }
-        // }
 
         if (this.arrowTrace) {
             this.arrowTrace.update(delta);
