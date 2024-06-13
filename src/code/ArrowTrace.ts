@@ -17,7 +17,7 @@ import {
     export class ArrowTrace extends Object3D {
         trail: Mesh;
         trailMaterial: ShaderMaterial;
-        trailMap: Texture;
+        //trailMap: Texture;
         targetScale: number = 0.1;
     
         //---------------------------------------------------------
@@ -38,7 +38,7 @@ import {
             const uniforms = UniformsUtils.merge([
                 {
                     time: { value: 1.0 },
-                    map: { value: this.trailMap },
+                    //map: { value: this.trailMap },
                     color: { value: new Color(0xfcee8d) },
                 },
             ]);
