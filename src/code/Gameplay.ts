@@ -73,7 +73,7 @@ export class Gameplay implements MouseListener {
         this.initializeTargetHitBoxes();
         
         this.arrowHitBoxHelper = new BoxHelper(this.arrow, new Color(0xffff00));
-        Game.game.scene.add(this.arrowHitBoxHelper); // -> BoxHelper dla strzały
+        //Game.game.scene.add(this.arrowHitBoxHelper); // -> BoxHelper dla strzały
         this.arrowHitBoxHelper.visible = false;
     }
 

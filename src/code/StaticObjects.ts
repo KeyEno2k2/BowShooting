@@ -1,4 +1,4 @@
-import { Object3D } from "three";
+import { Object3D, Box3Helper, Box3, Color } from "three";
 import { Game } from "./Game";
 import { Target } from "./Target";
 import * as CANNON from "cannon-es";
@@ -11,6 +11,7 @@ export class StaticObject {
     static arrowCollider?: CANNON.Body;
     static shadow: Object3D;
     static targetCircle: Object3D;
+    static targetHitBoxHelpers: Box3Helper[] = []; // Holds the BoxHelpers for targets
 
     constructor() {
         StaticObject.bow = Game.game.scene.getObjectByName("Mesh")!;
@@ -24,6 +25,9 @@ export class StaticObject {
         this.AddTargetByName("target_red");
         this.AddTargetByName("target_white");
         this.AddTargetByName("target_yelow");
+
+        
+        //this.showTargetHitBoxes(); // -> Funckja pokazująca hitboxy tarczy
     }
 
     AddTargetByName(name: string) {
@@ -34,5 +38,15 @@ export class StaticObject {
         }
         const newTarget = new Target(targetObject);
         StaticObject.targets.push(newTarget);
+    }
+
+	//Funckja pokazująca HitBoxy tarczy
+    showTargetHitBoxes() {
+        StaticObject.targets.forEach(target => {
+            const targetBox = new Box3().setFromObject(target.targetView);
+            const helper = new Box3Helper(targetBox, new Color(0xffff00));
+            Game.game.scene.add(helper);
+            StaticObject.targetHitBoxHelpers.push(helper);
+        });
     }
 }
