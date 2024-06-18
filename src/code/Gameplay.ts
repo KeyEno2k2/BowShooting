@@ -124,7 +124,7 @@ export class Gameplay implements MouseListener {
 
         this.animation.enabled = true;
         this.animation.reset();
-        this.animation.play(); // Upewnij się, że animacja jest odtwarzana
+        this.animation.play();
 
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
@@ -136,7 +136,6 @@ export class Gameplay implements MouseListener {
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
 
-        // Pokaż BoxHelper dla hitboxa strzały
         this.showHitBox();
 
         return true;
@@ -164,7 +163,7 @@ export class Gameplay implements MouseListener {
         this.clickPosition = new Vector2();
         this.mousePosition = new Vector2();
 
-        // Ukryj BoxHelper dla hitboxa strzały
+
         if (this.arrowHitBoxHelper) {
             this.arrowHitBoxHelper.visible = false;
         }

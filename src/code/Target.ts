@@ -6,15 +6,17 @@ export class Target {
     targetBody?: CANNON.Body;
     startPosition: Vector3;
     hitBox: Box3 | null = null;
+    hitBoxName: string; // Nowa właściwość dla nazwy hitboxu
 
-    constructor(view: Object3D) {
+    constructor(view: Object3D, hitBoxName: string) {
         if (!(view instanceof Object3D)) {
             throw new Error("Target object view is not an instance of Object3D");
         }
         this.targetView = view;
         this.startPosition = this.targetView.position.clone();
+        this.hitBoxName = hitBoxName; // Przypisanie nazwy hitboxu
 
-        //Sprawdzanie czy istnieją HitBoxy
+        // Sprawdzanie czy istnieją HitBoxy
         if (this.targetView.type === "Mesh" && 'geometry' in this.targetView) {
             const geometry = (this.targetView as any).geometry;
             this.hitBox = new Box3().setFromObject(this.targetView);
