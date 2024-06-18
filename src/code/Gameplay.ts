@@ -16,14 +16,11 @@ import {
     LoopOnce,
     PerspectiveCamera,
     Box3,
-    Mesh,
-    BoxHelper,
-    Color,
-    Scene,
+    Mesh
 } from "three";
 import { StaticObject } from "./StaticObjects";
 import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib";
-import { ArrowTrace } from "./ArrowTrace";
+//import { ArrowTrace } from "./ArrowTrace";
 import { GLTF } from "playable-dev/assets-lib";
 
 const SHOOTS: number = 3;
@@ -46,14 +43,14 @@ export class Gameplay implements MouseListener {
     hitAnimation!: SkeletonMesh;
     failAnimation!: SkeletonMesh;
     sr: ScreenResizer;
-    arrowTrace?: ArrowTrace;
+    //arrowTrace?: ArrowTrace;
     hits: number = 0;
     targetHitBoxes: Box3[] = [];
     targets: Mesh[] = [];
     targetGetHit: boolean = true;
     interacted: boolean = false;
     bowAnimation!: SkeletonMesh;
-    arrowHitBoxHelper?: BoxHelper; // BoxHelper for arrow hitbox visualization
+    
 
     constructor(camera: PerspectiveCamera) {
         this.camera = camera;
@@ -62,19 +59,17 @@ export class Gameplay implements MouseListener {
 
         this.sceneFile = Engine.assetsLib.lib["sceneGlb"] as GLTF;
         this.arrow = StaticObject.arrow;
+
         this.bow = StaticObject.bow;
         this.arrowStartPosition = this.arrow.position.clone();
 
         Engine.camera.position.set(15, 0, -3.75);
         Engine.camera.rotation.y = 1.5;
 
-        this.arrowTrace = new ArrowTrace();
+        //this.arrowTrace = new ArrowTrace();
         this.LoadAnimations();
         this.initializeTargetHitBoxes();
         
-        this.arrowHitBoxHelper = new BoxHelper(this.arrow, new Color(0xffff00));
-        //Game.game.scene.add(this.arrowHitBoxHelper); // -> BoxHelper dla strzały
-        this.arrowHitBoxHelper.visible = false;
     }
 
     initializeTargetHitBoxes() {
@@ -124,7 +119,7 @@ export class Gameplay implements MouseListener {
 
         this.animation.enabled = true;
         this.animation.reset();
-        this.animation.play();
+        this.animation.play(); // Upewnij się, że animacja jest odtwarzana
 
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
@@ -135,9 +130,6 @@ export class Gameplay implements MouseListener {
 
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
-
-        this.showHitBox();
-
         return true;
     }
 
@@ -146,7 +138,6 @@ export class Gameplay implements MouseListener {
             return true;
         }
         this.mousePosition = new Vector2(event.clientX, event.clientY);
-
         return true;
     }
 
@@ -162,18 +153,6 @@ export class Gameplay implements MouseListener {
         this.arrowInBow = false;
         this.clickPosition = new Vector2();
         this.mousePosition = new Vector2();
-
-
-        if (this.arrowHitBoxHelper) {
-            this.arrowHitBoxHelper.visible = false;
-        }
-    }
-
-    showHitBox() {
-        if (this.arrowHitBoxHelper) {
-            this.arrowHitBoxHelper.visible = true;
-            this.arrowHitBoxHelper.update();
-        }
     }
 
     playHitAnimation() {
@@ -209,13 +188,21 @@ export class Gameplay implements MouseListener {
 
         this.targetHitBoxes.forEach((hitbox, index) => {
             if (hitbox.intersectsBox(arrowHitBox)) {
-                console.log(`Trafiłeś w tarczę ${index}!`);
+                console.log(`trafiono w tarczę ${index}!`);
                 this.playHitAnimation();
             }
         });
     }
 
     update(delta: number): void {
+        if (StaticObject.arrowCollider && this.arrow){
+            StaticObject.arrowCollider.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y,
+                this.arrow.position.z
+            );
+        }
+
         if (this.arrow && StaticObject.shadow) {
             if (this.arrow.position.z < -19) {
                 if (StaticObject.shadow.visible) {
@@ -228,11 +215,6 @@ export class Gameplay implements MouseListener {
 
         this.mixer.update(delta);
         this.checkCollisions();
-
-        // Aktualizacja BoxHelper dla hitboxa strzały
-        if (this.arrowHitBoxHelper) {
-            this.arrowHitBoxHelper.update();
-        }
     }
 
     LoadAnimations() {
@@ -244,9 +226,10 @@ export class Gameplay implements MouseListener {
                 this.animation.play();
                 this.animation.enabled = false;
     
+                // Dodanie obserwatora na zdarzenie zakończenia odtwarzania animacji
                 this.mixer.addEventListener('finished', (event) => {
                     if (event.action === this.animation) {
-                        this.shooted = true;
+                        this.shooted = true; // Ustawienie shooted na true po zakończeniu animacji
                         console.log("Ustawienie Wartości Shooted na:", this.shooted);
                     }
 
@@ -266,20 +249,15 @@ export class Gameplay implements MouseListener {
     }
     
     ResetScene(){
-        this.animation.stop();
-        this.arrow.position.copy(this.arrowStartPosition);
+        this.animation.stop(); // Zatrzymaj animację strzału
+        this.arrow.position.copy(this.arrowStartPosition); // Przywróć początkową pozycję strzały
     }
     
     PrepareNextShot(){
-        this.shoots++;
-        this.shooted = false;
-        this.arrow.position.copy(this.arrowStartPosition);
-        this.animation.reset();
-        this.animation.enabled = true;
-
-        //Resetowanie BoxHelpera dla strzały
-        if (this.arrowHitBoxHelper) {
-            this.arrowHitBoxHelper.update();
-        }
+        this.shoots++; // Inkrementuj liczbę wykonanych strzałów
+        this.shooted = false; // Zresetuj flagę strzału
+        this.arrow.position.copy(this.arrowStartPosition); // Przywróć początkową pozycję strzały
+        this.animation.reset(); // Zresetuj animację strzału
+        this.animation.enabled = true; // Włącz animację strzału
     }
 }
