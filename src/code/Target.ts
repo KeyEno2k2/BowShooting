@@ -14,7 +14,7 @@ export class Target {
         this.targetView = view;
         this.startPosition = this.targetView.position.clone();
 
-        // Check if geometry exists before using it
+        //Sprawdzanie czy istnieją HitBoxy
         if (this.targetView.type === "Mesh" && 'geometry' in this.targetView) {
             const geometry = (this.targetView as any).geometry;
             this.hitBox = new Box3().setFromObject(this.targetView);

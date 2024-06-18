@@ -1,4 +1,4 @@
-import { Object3D, Box3Helper, Box3, Color } from "three";
+import { Object3D, Box3Helper, Box3, Color, Vector3 } from "three";
 import { Game } from "./Game";
 import { Target } from "./Target";
 import * as CANNON from "cannon-es";
@@ -11,7 +11,7 @@ export class StaticObject {
     static arrowCollider?: CANNON.Body;
     static shadow: Object3D;
     static targetCircle: Object3D;
-    static targetHitBoxHelpers: Box3Helper[] = []; // Holds the BoxHelpers for targets
+    static targetHitBoxHelpers: Box3Helper[] = [];
 
     constructor() {
         StaticObject.bow = Game.game.scene.getObjectByName("Mesh")!;
@@ -26,8 +26,7 @@ export class StaticObject {
         this.AddTargetByName("target_white");
         this.AddTargetByName("target_yelow");
 
-        
-        //this.showTargetHitBoxes(); // -> Funckja pokazująca hitboxy tarczy
+        StaticObject.showTargetHitBoxes(); // Funkcja pokazująca hitboxy tarczy
     }
 
     AddTargetByName(name: string) {
@@ -40,13 +39,22 @@ export class StaticObject {
         StaticObject.targets.push(newTarget);
     }
 
-	//Funckja pokazująca HitBoxy tarczy
-    showTargetHitBoxes() {
+    static showTargetHitBoxes() {
         StaticObject.targets.forEach(target => {
             const targetBox = new Box3().setFromObject(target.targetView);
-            const helper = new Box3Helper(targetBox, new Color(0xffff00));
+            const offset = new Vector3(0, -1, 0); // Przesunięcie o -0.5 wzdłuż osi X (zmień wartość według potrzeb)
+    
+            // Przesunięcie hitboxa
+            targetBox.min.add(offset);
+            targetBox.max.add(offset);
+    
+            const helper = new Box3Helper(targetBox, new Color(0xff00ff));
             Game.game.scene.add(helper);
             StaticObject.targetHitBoxHelpers.push(helper);
+    
+            // Ustawienie hitboxa jako dziecko tarczy
+            target.targetView.add(helper);
         });
     }
+    
 }
