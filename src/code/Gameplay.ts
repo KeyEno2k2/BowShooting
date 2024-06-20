@@ -22,6 +22,7 @@ import { StaticObject } from "./StaticObjects";
 import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib";
 //import { ArrowTrace } from "./ArrowTrace";
 import { GLTF } from "playable-dev/assets-lib";
+import { Target } from "./Target";
 
 const SHOOTS: number = 3;
 const RESTART_TIME_MILLISECONDS: number = 2200;
@@ -44,6 +45,7 @@ export class Gameplay implements MouseListener {
     failAnimation!: SkeletonMesh;
     sr: ScreenResizer;
     //arrowTrace?: ArrowTrace;
+    updateTargetCollidersBlockade: boolean = false;
     hits: number = 0;
     targetHitBoxes: Box3[] = [];
     targets: Mesh[] = [];
@@ -68,16 +70,16 @@ export class Gameplay implements MouseListener {
 
         //this.arrowTrace = new ArrowTrace();
         this.LoadAnimations();
-        this.initializeTargetHitBoxes();
+        //this.initializeTargetHitBoxes();
         
     }
 
-    initializeTargetHitBoxes() {
-        this.targets.forEach(target => {
-            const hitBox = new Box3().setFromObject(target);
-            this.targetHitBoxes.push(hitBox);
-        });
-    }
+    // initializeTargetHitBoxes() {
+    //     this.targets.forEach(target => {
+    //         const hitBox = new Box3().setFromObject(target);
+    //         this.targetHitBoxes.push(hitBox);
+    //     });
+    // }
 
     onPointerUp(event: MouseEvent): boolean {
         if (Game.sessionCounter > 1 || this.shooted || !this.arrowInBow) {
@@ -182,15 +184,41 @@ export class Gameplay implements MouseListener {
         Engine.restartGame();
     }
 
-    checkCollisions() {
-        const arrowPosition = new Vector3().setFromMatrixPosition(this.arrow.matrixWorld); 
-        const arrowHitBox = new Box3().setFromCenterAndSize(arrowPosition, new Vector3(0.1, 0.1, 0.1));
+    // checkCollisions() {
+    //     const arrowPosition = new Vector3().setFromMatrixPosition(this.arrow.matrixWorld); 
+    //     const arrowHitBox = new Box3().setFromCenterAndSize(arrowPosition, new Vector3(0.1, 0.1, 0.1));
 
-        this.targetHitBoxes.forEach((hitbox, index) => {
-            if (hitbox.intersectsBox(arrowHitBox)) {
-                console.log(`trafiono w tarczę ${index}!`);
-                this.playHitAnimation();
-            }
+    //     this.targetHitBoxes.forEach((hitbox, index) => {
+    //         if (hitbox.intersectsBox(arrowHitBox)) {
+    //             console.log(`trafiono w tarczę ${index}!`);
+    //             this.playHitAnimation();
+    //         }
+    //     });
+    // }
+
+    SetTargetInTheSamePlace(){
+        StaticObject.targets.forEach((target) => {
+            const position = target.targetView.position.clone();
+            this.updateTargetCollidersBlockade = true;
+
+            new Animator ({time: RESTART_TIME_MILLISECONDS}, (o: number) => {
+                target.targetView.position.set(
+                    position.x,
+                    position.y,
+                    position.z
+                );
+
+                if (o >= 1) {
+                    target.targetBody?.quaternion.set(0,0,0,1);
+                    target.targetBody?.position.set(
+                        target.targetView.position.x + StaticObject.targetObject.position.x,
+                        target.targetView.position.y + StaticObject.targetObject.position.y,
+                        target.targetView.position.z + StaticObject.targetObject.position.z
+                    );
+                    target.targetBody?.sleep();
+                    this.updateTargetCollidersBlockade = false;
+                }
+            })
         });
     }
 
@@ -213,8 +241,18 @@ export class Gameplay implements MouseListener {
             }
         }
 
+        if (this.arrow){
+            StaticObject.arrowCollider?.position.set(
+                this.arrow.position.x,
+                this.arrow.position.y,
+                this.arrow.position.z
+            )
+        }
+
         this.mixer.update(delta);
-        this.checkCollisions();
+        //this.checkCollisions();
+
+
     }
 
     LoadAnimations() {
@@ -259,5 +297,8 @@ export class Gameplay implements MouseListener {
         this.arrow.position.copy(this.arrowStartPosition); // Przywróć początkową pozycję strzały
         this.animation.reset(); // Zresetuj animację strzału
         this.animation.enabled = true; // Włącz animację strzału
+        setTimeout(()=>{
+            this.SetTargetInTheSamePlace();
+        })
     }
 }

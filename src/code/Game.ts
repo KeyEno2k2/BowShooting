@@ -17,7 +17,7 @@ export class Game {
 	gameplay?: Gameplay;
 	cannonWorld: CANNON.World;
 	cannonDebugRenderer?: CannonDebugRenderer;
-	debugMode: boolean = false;
+	debugMode: boolean = true;
 	hud: HUD;
 	z_order: number = 1;
 	pointA: Vector3 = new Vector3(0, 0, 0);
@@ -57,7 +57,7 @@ export class Game {
 
 	update(delta: number): void {
 		this.gameplay?.update(delta);
-		this.cannonWorld.step(delta / 6, delta, 10);
+		this.cannonWorld.step(delta);
 		if (this.debugMode && this.cannonDebugRenderer) {
 			this.cannonDebugRenderer.update();
 		}
