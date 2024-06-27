@@ -249,6 +249,33 @@ export class Gameplay implements MouseListener {
             )
         }
 
+        if (StaticObject.arrow && StaticObject.shadow) {
+            if (StaticObject.arrow.position.z < -19) {
+                if (StaticObject.shadow.visible) {
+                    StaticObject.shadow.visible = false;
+                    StaticObject.arrow.layers.set(0);
+                }
+                StaticObject.arrow.position.y -= delta * 2.5;
+            }
+        }
+
+        if (StaticObject.arrow) {
+            if (StaticObject.arrowCollider) {
+                StaticObject.arrowCollider.position.set(
+                    StaticObject.arrow.position.x,
+                    StaticObject.arrow.position.y,
+                    StaticObject.arrow.position.z - 0.5
+                );
+                StaticObject.arrowCollider.quaternion.set(
+                    StaticObject.arrow.quaternion.x,
+                    StaticObject.arrow.quaternion.y,
+                    StaticObject.arrow.quaternion.z,
+                    StaticObject.arrow.quaternion.w
+                );
+
+            }
+        }
+
         this.mixer.update(delta);
         //this.checkCollisions();
 

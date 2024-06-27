@@ -19,6 +19,12 @@ export class StaticObject {
         StaticObject.arrow = Game.game.scene.getObjectByName("model_arrow_modern_4")!;
         StaticObject.targetCircle = Game.game.scene.getObjectByName("target_yelow")!;
 
+        this.AddTargetByName("circle_white");
+        this.AddTargetByName("circles_black");
+        this.AddTargetByName("Cube");
+        this.AddTargetByName("leg_1");
+        this.AddTargetByName("leg_2");
+        this.AddTargetByName("leg_3");
         this.AddTargetByName("target_black");
         this.AddTargetByName("target_blue");
         this.AddTargetByName("target_red");
