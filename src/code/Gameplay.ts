@@ -5,6 +5,8 @@ import {
     ScreenResizer,
     analytics,
     AWAudio,
+    LoopAnimator,
+    removeFromUpdateables,
 } from "playable-dev";
 import { Game } from "./Game";
 import {
@@ -23,6 +25,7 @@ import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib";
 //import { ArrowTrace } from "./ArrowTrace";
 import { GLTF } from "playable-dev/assets-lib";
 import { Target } from "./Target";
+import { randFloat } from "three/src/math/MathUtils";
 
 const SHOOTS: number = 3;
 const RESTART_TIME_MILLISECONDS: number = 2200;
@@ -47,17 +50,18 @@ export class Gameplay implements MouseListener {
     //arrowTrace?: ArrowTrace;
     updateTargetCollidersBlockade: boolean = false;
     hits: number = 0;
-    targetHitBoxes: Box3[] = [];
     targets: Mesh[] = [];
     targetGetHit: boolean = true;
     interacted: boolean = false;
     bowAnimation!: SkeletonMesh;
+    rotateAnimation?: LoopAnimator;
+    allowAnimation: boolean = false;
     
 
     constructor(camera: PerspectiveCamera) {
         this.camera = camera;
         this.sr = ScreenResizer.resizer;
-        Engine.controlEvents.addListener(this); // Ensure this is properly defined in Engine
+        Engine.controlEvents.addListener(this);
 
         this.sceneFile = Engine.assetsLib.lib["sceneGlb"] as GLTF;
         this.arrow = StaticObject.arrow;
@@ -70,16 +74,8 @@ export class Gameplay implements MouseListener {
 
         //this.arrowTrace = new ArrowTrace();
         this.LoadAnimations();
-        //this.initializeTargetHitBoxes();
-        
+        console.log("Model Łuku", this.bow);
     }
-
-    // initializeTargetHitBoxes() {
-    //     this.targets.forEach(target => {
-    //         const hitBox = new Box3().setFromObject(target);
-    //         this.targetHitBoxes.push(hitBox);
-    //     });
-    // }
 
     onPointerUp(event: MouseEvent): boolean {
         if (Game.sessionCounter > 1 || this.shooted || !this.arrowInBow) {
@@ -93,6 +89,7 @@ export class Gameplay implements MouseListener {
     }
 
     onPointerDown(event: MouseEvent): boolean {
+        this.arrowInBow = true;
         if (!this.interacted && Game.sessionCounter == 1) {
             analytics.logEvent("interaction");
             this.interacted = true;
@@ -101,11 +98,14 @@ export class Gameplay implements MouseListener {
             return true;
         }
 
+        console.log("Ustawienie wartości arrowInBow na:",this.arrowInBow);
         let currentArrowPosition = new Vector3;
         const startDistance = 0.3;
         const endDistance = 9.7;
         const arrowSpeed = 0.7;
         const duration = this.animation.getClip().duration;
+
+        //console.log(this.animation.getClip().duration);     //Pobranie długości animacji łuku
 
         new Animator({ time: duration * 0.6 }, (o: number) => {
             this.arrow.position.z = this.arrowStartPosition.z + startDistance * o;
@@ -121,7 +121,7 @@ export class Gameplay implements MouseListener {
 
         this.animation.enabled = true;
         this.animation.reset();
-        this.animation.play(); // Upewnij się, że animacja jest odtwarzana
+        this.animation.play();
 
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
@@ -135,11 +135,14 @@ export class Gameplay implements MouseListener {
         return true;
     }
 
+
+
     onPointerMove(event: MouseEvent): boolean {
         if (this.shooted) {
             return true;
         }
         this.mousePosition = new Vector2(event.clientX, event.clientY);
+        this.RotateBow();
         return true;
     }
 
@@ -155,6 +158,60 @@ export class Gameplay implements MouseListener {
         this.arrowInBow = false;
         this.clickPosition = new Vector2();
         this.mousePosition = new Vector2();
+    }
+
+    StartMaxBowRotation() {
+        let randomVector = new Vector3 (0,0,0);
+        this.rotateAnimation = new LoopAnimator(
+            {time: 1.3},
+            (o: number) => {
+                if (!this.allowAnimation && this.arrowInBow) {
+                    this.allowAnimation = true;
+                    randomVector  = new Vector3 (randFloat(-1,1), randFloat(-1,1), randFloat(-1,1))
+                    .normalize()
+                    .divideScalar(100);
+                }
+
+                console.log("Ustawienie Wartości dla this.allowAnimation:",this.allowAnimation,"Ustawienie wartości dla this.arrowInBow:", this.arrowInBow); // Sprawdzenie ustawionych własności
+                //Rotacja dla łuku
+                if (this.allowAnimation && this.arrowInBow) {
+                    this.bow.rotation.set(
+                        this.bow.rotation.x = 0,
+                        this.bow.rotation.y = 0,
+                        this.bow.rotation.z = 1
+                    );
+                }
+                //Rotacja dla strzały
+                if (this.allowAnimation && this.arrowInBow) {
+                    this.arrow.rotation.set(
+                        this.arrow.rotation.x = 0,
+                        this.arrow.rotation.y = 0,
+                        this.arrow.rotation.z = 1
+                    );
+                }
+            }, () => {
+                this.allowAnimation = false;
+            }
+        );
+    }
+
+    ResetMaxRotationAnimation() {
+        removeFromUpdateables(this.rotateAnimation!);
+        this.rotateAnimation = undefined;
+    }
+
+    MaxRotateAnimationCheckAndPlay() {
+        if ((this.clickPosition.y - this.mousePosition.y) / 150 > -0.8) {
+            this.ResetMaxRotationAnimation();
+        } else if (!this.rotateAnimation) {
+            this.StartMaxBowRotation();
+        }
+    }
+
+    RotateBow() {
+        if (this.arrowInBow && this.arrow) {
+            this.MaxRotateAnimationCheckAndPlay();
+        }
     }
 
     playHitAnimation() {
@@ -183,18 +240,6 @@ export class Gameplay implements MouseListener {
     ShowNextLevel() {
         Engine.restartGame();
     }
-
-    // checkCollisions() {
-    //     const arrowPosition = new Vector3().setFromMatrixPosition(this.arrow.matrixWorld); 
-    //     const arrowHitBox = new Box3().setFromCenterAndSize(arrowPosition, new Vector3(0.1, 0.1, 0.1));
-
-    //     this.targetHitBoxes.forEach((hitbox, index) => {
-    //         if (hitbox.intersectsBox(arrowHitBox)) {
-    //             console.log(`trafiono w tarczę ${index}!`);
-    //             this.playHitAnimation();
-    //         }
-    //     });
-    // }
 
     SetTargetInTheSamePlace(){
         StaticObject.targets.forEach((target) => {
@@ -277,9 +322,6 @@ export class Gameplay implements MouseListener {
         }
 
         this.mixer.update(delta);
-        //this.checkCollisions();
-
-
     }
 
     LoadAnimations() {

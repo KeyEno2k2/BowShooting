@@ -17,7 +17,7 @@ export class Game {
 	gameplay?: Gameplay;
 	cannonWorld: CANNON.World;
 	cannonDebugRenderer?: CannonDebugRenderer;
-	debugMode: boolean = true;
+	debugMode: boolean = false;
 	hud: HUD;
 	z_order: number = 1;
 	pointA: Vector3 = new Vector3(0, 0, 0);
