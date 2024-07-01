@@ -58,6 +58,8 @@ export class Gameplay implements MouseListener {
     allowAnimation: boolean = false;
     bowGroup: Object3D;
     allowedToMove: boolean;
+    targetCenter!: Object3D;
+    targetCenterPosition: Vector3 = new Vector3();
     
 
     constructor(camera: PerspectiveCamera) {
@@ -76,13 +78,16 @@ export class Gameplay implements MouseListener {
         this.allowedToMove = false;
 
         //this.arrowTrace = new ArrowTrace();
-
-        console.log("Model Łuku", this.bow);
+        //console.log("Model Łuku", this.bow);
         
         this.bowGroup = new Object3D();
         this.bowGroup.add(this.bow);
         this.bowGroup.add(this.arrow);
         Game.game.scene.add(this.bowGroup);
+        this.bowGroup.position.y = -0.1;
+        this.targetCenter = StaticObject.targetObject;
+        this.targetCenterPosition = StaticObject.targetObject.position.clone();
+        //console.log(this.targetCenterPosition);
 
         this.LoadAnimations();
     }
@@ -121,7 +126,6 @@ export class Gameplay implements MouseListener {
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
     
-        
         return true;
     }
 
@@ -295,8 +299,31 @@ export class Gameplay implements MouseListener {
             }
         }
 
-        // this.RotateBow();
+        this.Points();
         this.mixer.update(delta);
+    }
+
+    Points(){
+        let globalArrowPosition = new Vector3();
+        this.arrow.getWorldPosition(globalArrowPosition);
+        if(globalArrowPosition.distanceTo(StaticObject.targetObject.position) <= 0.93 ){
+            console.log("Żółte");
+        }
+        if(globalArrowPosition.distanceTo(StaticObject.targetObject.position) > 0.93 && globalArrowPosition.distanceTo(StaticObject.targetObject.position) <= 0.996){
+            console.log("Czerwone");
+        }
+        if(globalArrowPosition.distanceTo(StaticObject.targetObject.position) > 0.996 && globalArrowPosition.distanceTo(StaticObject.targetObject.position) <= 1.11){
+            console.log("Niebieskie");
+        }
+        if(globalArrowPosition.distanceTo(StaticObject.targetObject.position) > 1.11 && globalArrowPosition.distanceTo(StaticObject.targetObject.position) <= 1.2){
+            console.log("Czarne");
+        }
+        if(globalArrowPosition.distanceTo(StaticObject.targetObject.position) > 1.2 && globalArrowPosition.distanceTo(StaticObject.targetObject.position) <= 1.3){
+            console.log("Białe");
+        }
+        
+        console.log(globalArrowPosition.distanceTo(StaticObject.targetObject.position));
+        // console.log(StaticObject.targetObject.position, this.arrow.position);
     }
 
     LoadAnimations() {
