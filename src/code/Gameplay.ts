@@ -17,8 +17,8 @@ import {
     AnimationAction,
     LoopOnce,
     PerspectiveCamera,
-    Box3,
-    Mesh
+    Mesh,
+    Group
 } from "three";
 import { StaticObject } from "./StaticObjects";
 import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib";
@@ -47,7 +47,6 @@ export class Gameplay implements MouseListener {
     hitAnimation!: SkeletonMesh;
     failAnimation!: SkeletonMesh;
     sr: ScreenResizer;
-    //arrowTrace?: ArrowTrace;
     updateTargetCollidersBlockade: boolean = false;
     hits: number = 0;
     targets: Mesh[] = [];
@@ -56,6 +55,7 @@ export class Gameplay implements MouseListener {
     bowAnimation!: SkeletonMesh;
     rotateAnimation?: LoopAnimator;
     allowAnimation: boolean = false;
+    bowGroup: Group;
     
 
     constructor(camera: PerspectiveCamera) {
@@ -75,6 +75,12 @@ export class Gameplay implements MouseListener {
         //this.arrowTrace = new ArrowTrace();
         this.LoadAnimations();
         console.log("Model Łuku", this.bow);
+        
+        this.bowGroup = new Group();
+        this.bowGroup.add(this.bow);
+        Game.game.scene.add(this.bowGroup);
+        this.bowGroup.rotation.x = (2 * Math.PI);
+        console.log(this.bow.rotation.x);
     }
 
     onPointerUp(event: MouseEvent): boolean {
@@ -98,44 +104,20 @@ export class Gameplay implements MouseListener {
             return true;
         }
 
-        console.log("Ustawienie wartości arrowInBow na:",this.arrowInBow);
-        let currentArrowPosition = new Vector3;
-        const startDistance = 0.3;
-        const endDistance = 9.7;
-        const arrowSpeed = 0.7;
-        const duration = this.animation.getClip().duration;
-
-        //console.log(this.animation.getClip().duration);     //Pobranie długości animacji łuku
-
-        new Animator({ time: duration * 0.6 }, (o: number) => {
-            this.arrow.position.z = this.arrowStartPosition.z + startDistance * o;
-            if (o >= 1) {
-                currentArrowPosition = this.arrow.position.clone();
-            }
-        });
-
-        new Animator({ time: arrowSpeed, delay: duration - 0.5 }, (o: number) => {
-            this.arrow.position.z = currentArrowPosition.z - endDistance * o;
-            this.shooted = true;
-        });
-
-        this.animation.enabled = true;
-        this.animation.reset();
-        this.animation.play();
-
+        this.interacted = true;
+        this.ShootArrow();
         if (!this.shooted) {
             Game.game.hud.showMiniGame();
             if (!Game.game.hud.tutorialEnded) {
                 Game.game.hud.hideWhiteTutorial();
             }
         }
-
+        
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
+        
         return true;
     }
-
-
 
     onPointerMove(event: MouseEvent): boolean {
         if (this.shooted) {
@@ -172,19 +154,19 @@ export class Gameplay implements MouseListener {
                     .divideScalar(100);
                 }
 
-                console.log("Ustawienie Wartości dla this.allowAnimation:",this.allowAnimation,"Ustawienie wartości dla this.arrowInBow:", this.arrowInBow); // Sprawdzenie ustawionych własności
+                //console.log("Ustawienie Wartości dla this.allowAnimation:",this.allowAnimation,"Ustawienie wartości dla this.arrowInBow:", this.arrowInBow); // Sprawdzenie ustawionych własności
                 //Rotacja dla łuku
                 if (this.allowAnimation && this.arrowInBow) {
                     this.bow.rotation.set(
-                        this.bow.rotation.x = 0,
+                        this.bow.rotation.x = (0.7 * Math.PI),
                         this.bow.rotation.y = 0,
-                        this.bow.rotation.z = 1
+                        this.bow.rotation.z = 0
                     );
                 }
                 //Rotacja dla strzały
                 if (this.allowAnimation && this.arrowInBow) {
                     this.arrow.rotation.set(
-                        this.arrow.rotation.x = 0,
+                        this.arrow.rotation.x = 0.7 * Math.PI * (this.arrow.position.x),
                         this.arrow.rotation.y = 0,
                         this.arrow.rotation.z = 1
                     );
@@ -241,6 +223,38 @@ export class Gameplay implements MouseListener {
         Engine.restartGame();
     }
 
+    ShootArrow(){
+        console.log("Ustawienie wartości arrowInBow na:",this.arrowInBow);
+        let currentArrowPosition = new Vector3;
+        const startDistance = 0.3;
+        const endDistance = 9.7;
+        const arrowSpeed = 0.7;
+        const duration = this.animation.getClip().duration;
+
+        //console.log(this.animation.getClip().duration);     //Pobranie długości animacji łuku
+
+        new Animator({ time: duration * 0.6 }, (o: number) => {
+            this.arrow.position.z = this.arrowStartPosition.z + startDistance * o;
+            if (o >= 1) {
+                currentArrowPosition = this.arrow.position.clone();
+            }
+        });
+
+        new Animator({ time: arrowSpeed, delay: duration - 0.5 }, (o: number) => {
+            this.arrow.position.z = currentArrowPosition.z - endDistance * o;
+            this.shooted = true;
+        });
+
+        //Schowanie miniGry po odegraniu animacji
+        new Animator({time: arrowSpeed, delay: duration - 2.1}, (o: number) => {
+            Game.game.hud.hideMiniGame();
+        })
+
+        this.animation.enabled = true;
+        this.animation.reset();
+        this.animation.play();
+    }
+
     SetTargetInTheSamePlace(){
         StaticObject.targets.forEach((target) => {
             const position = target.targetView.position.clone();
@@ -292,6 +306,7 @@ export class Gameplay implements MouseListener {
                 this.arrow.position.y,
                 this.arrow.position.z
             )
+            this.bow.rotateX(1);
         }
 
         if (StaticObject.arrow && StaticObject.shadow) {
@@ -320,7 +335,7 @@ export class Gameplay implements MouseListener {
 
             }
         }
-
+        
         this.mixer.update(delta);
     }
 

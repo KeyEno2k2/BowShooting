@@ -1,4 +1,4 @@
-import { Object3D } from "three";
+import { Group, Object3D } from "three";
 import { Game } from "./Game";
 import { Target } from "./Target";
 import * as CANNON from "cannon-es";
@@ -19,6 +19,7 @@ export class StaticObject {
         StaticObject.arrow = Game.game.scene.getObjectByName("model_arrow_modern_4")!;
         StaticObject.targetCircle = Game.game.scene.getObjectByName("target_yelow")!;
 
+        //Cały Target -> Wszystkie jego części
         this.AddTargetByName("circle_white");
         this.AddTargetByName("circles_black");
         this.AddTargetByName("Cube");
@@ -30,6 +31,7 @@ export class StaticObject {
         this.AddTargetByName("target_red");
         this.AddTargetByName("target_white");
         this.AddTargetByName("target_yelow");
+
     }
 
     AddTargetByName(name: string) {
