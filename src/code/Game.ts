@@ -56,7 +56,7 @@ export class Game {
 	//---------------------------------------------------------
 
 	update(delta: number): void {
-		this.gameplay?.update(delta);
+		// this.gameplay?.update(delta);
 		this.cannonWorld.step(delta);
 		if (this.debugMode && this.cannonDebugRenderer) {
 			this.cannonDebugRenderer.update();

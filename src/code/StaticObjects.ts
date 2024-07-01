@@ -13,7 +13,7 @@ export class StaticObject {
     static targetCircle: Object3D;
 
     constructor() {
-        StaticObject.bow = Game.game.scene.getObjectByName("Mesh")!;
+        StaticObject.bow = Game.game.scene.getObjectByName("Armature_bow")!;
         StaticObject.shadow = Game.game.scene.getObjectByName("Shadow")!;
         StaticObject.targetObject = Game.game.scene.getObjectByName("target")!;
         StaticObject.arrow = Game.game.scene.getObjectByName("model_arrow_modern_4")!;

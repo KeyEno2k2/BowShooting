@@ -18,7 +18,8 @@ import {
     LoopOnce,
     PerspectiveCamera,
     Mesh,
-    Group
+    Group,
+    Quaternion
 } from "three";
 import { StaticObject } from "./StaticObjects";
 import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib";
@@ -55,7 +56,7 @@ export class Gameplay implements MouseListener {
     bowAnimation!: SkeletonMesh;
     rotateAnimation?: LoopAnimator;
     allowAnimation: boolean = false;
-    bowGroup: Group;
+    bowGroup: Object3D;
     
 
     constructor(camera: PerspectiveCamera) {
@@ -76,11 +77,11 @@ export class Gameplay implements MouseListener {
         this.LoadAnimations();
         console.log("Model Łuku", this.bow);
         
-        this.bowGroup = new Group();
+        this.bowGroup = new Object3D();
         this.bowGroup.add(this.bow);
+        this.bowGroup.add(this.arrow);
         Game.game.scene.add(this.bowGroup);
-        this.bowGroup.rotation.x = (2 * Math.PI);
-        console.log(this.bow.rotation.x);
+        // this.bowGroup.rotation.x = (0.7 * Math.PI);
     }
 
     onPointerUp(event: MouseEvent): boolean {
@@ -155,22 +156,15 @@ export class Gameplay implements MouseListener {
                 }
 
                 //console.log("Ustawienie Wartości dla this.allowAnimation:",this.allowAnimation,"Ustawienie wartości dla this.arrowInBow:", this.arrowInBow); // Sprawdzenie ustawionych własności
-                //Rotacja dla łuku
+                //Rotacja dla łuku i strzały
                 if (this.allowAnimation && this.arrowInBow) {
-                    this.bow.rotation.set(
-                        this.bow.rotation.x = (0.7 * Math.PI),
-                        this.bow.rotation.y = 0,
-                        this.bow.rotation.z = 0
+                    this.bowGroup.rotation.set(
+                        this.bowGroup.rotation.x = 0,
+                        this.bowGroup.rotation.y = 0,
+                        this.bowGroup.rotation.z = 0
                     );
                 }
-                //Rotacja dla strzały
-                if (this.allowAnimation && this.arrowInBow) {
-                    this.arrow.rotation.set(
-                        this.arrow.rotation.x = 0.7 * Math.PI * (this.arrow.position.x),
-                        this.arrow.rotation.y = 0,
-                        this.arrow.rotation.z = 1
-                    );
-                }
+
             }, () => {
                 this.allowAnimation = false;
             }
@@ -306,7 +300,6 @@ export class Gameplay implements MouseListener {
                 this.arrow.position.y,
                 this.arrow.position.z
             )
-            this.bow.rotateX(1);
         }
 
         if (StaticObject.arrow && StaticObject.shadow) {
