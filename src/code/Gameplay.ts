@@ -26,7 +26,7 @@ import { SkeletonData, SkeletonMesh } from "playable-dev/spine-lib";
 //import { ArrowTrace } from "./ArrowTrace";
 import { GLTF } from "playable-dev/assets-lib";
 import { Target } from "./Target";
-import { randFloat } from "three/src/math/MathUtils";
+import { DEG2RAD, randFloat } from "three/src/math/MathUtils";
 
 const SHOOTS: number = 3;
 const RESTART_TIME_MILLISECONDS: number = 2200;
@@ -57,6 +57,7 @@ export class Gameplay implements MouseListener {
     rotateAnimation?: LoopAnimator;
     allowAnimation: boolean = false;
     bowGroup: Object3D;
+    allowedToMove: boolean;
     
 
     constructor(camera: PerspectiveCamera) {
@@ -72,23 +73,25 @@ export class Gameplay implements MouseListener {
 
         Engine.camera.position.set(15, 0, -3.75);
         Engine.camera.rotation.y = 1.5;
+        this.allowedToMove = false;
 
         //this.arrowTrace = new ArrowTrace();
-        this.LoadAnimations();
+
         console.log("Model Łuku", this.bow);
         
         this.bowGroup = new Object3D();
         this.bowGroup.add(this.bow);
         this.bowGroup.add(this.arrow);
         Game.game.scene.add(this.bowGroup);
-        // this.bowGroup.rotation.x = (0.7 * Math.PI);
+
+        this.LoadAnimations();
     }
 
     onPointerUp(event: MouseEvent): boolean {
+        this.allowedToMove = false;
         if (Game.sessionCounter > 1 || this.shooted || !this.arrowInBow) {
             return true;
         }
-        Game.game.hud.hideMiniGame();
         if (!this.shooted) {
             Game.game.hud.showWhiteTutorial();
         }
@@ -96,6 +99,7 @@ export class Gameplay implements MouseListener {
     }
 
     onPointerDown(event: MouseEvent): boolean {
+        this.allowedToMove = true;
         this.arrowInBow = true;
         if (!this.interacted && Game.sessionCounter == 1) {
             analytics.logEvent("interaction");
@@ -105,10 +109,10 @@ export class Gameplay implements MouseListener {
             return true;
         }
 
-        this.interacted = true;
+        this.interacted = true;        
         this.ShootArrow();
+
         if (!this.shooted) {
-            Game.game.hud.showMiniGame();
             if (!Game.game.hud.tutorialEnded) {
                 Game.game.hud.hideWhiteTutorial();
             }
@@ -116,16 +120,21 @@ export class Gameplay implements MouseListener {
         
         this.arrowInBow = true;
         this.clickPosition = new Vector2(event.clientX, event.clientY);
+    
         
         return true;
     }
 
     onPointerMove(event: MouseEvent): boolean {
         if (this.shooted) {
+            this.allowedToMove = false
             return true;
         }
         this.mousePosition = new Vector2(event.clientX, event.clientY);
-        this.RotateBow();
+        if (this.allowedToMove){
+            this.RotateBow();
+        }
+        
         return true;
     }
 
@@ -134,6 +143,7 @@ export class Gameplay implements MouseListener {
             return true;
         }
         this.ResetPositions();
+        this.allowedToMove = false;
         return true;
     }
 
@@ -143,51 +153,12 @@ export class Gameplay implements MouseListener {
         this.mousePosition = new Vector2();
     }
 
-    StartMaxBowRotation() {
-        let randomVector = new Vector3 (0,0,0);
-        this.rotateAnimation = new LoopAnimator(
-            {time: 1.3},
-            (o: number) => {
-                if (!this.allowAnimation && this.arrowInBow) {
-                    this.allowAnimation = true;
-                    randomVector  = new Vector3 (randFloat(-1,1), randFloat(-1,1), randFloat(-1,1))
-                    .normalize()
-                    .divideScalar(100);
-                }
-
-                //console.log("Ustawienie Wartości dla this.allowAnimation:",this.allowAnimation,"Ustawienie wartości dla this.arrowInBow:", this.arrowInBow); // Sprawdzenie ustawionych własności
-                //Rotacja dla łuku i strzały
-                if (this.allowAnimation && this.arrowInBow) {
-                    this.bowGroup.rotation.set(
-                        this.bowGroup.rotation.x = 0,
-                        this.bowGroup.rotation.y = 0,
-                        this.bowGroup.rotation.z = 0
-                    );
-                }
-
-            }, () => {
-                this.allowAnimation = false;
-            }
-        );
-    }
-
-    ResetMaxRotationAnimation() {
-        removeFromUpdateables(this.rotateAnimation!);
-        this.rotateAnimation = undefined;
-    }
-
-    MaxRotateAnimationCheckAndPlay() {
-        if ((this.clickPosition.y - this.mousePosition.y) / 150 > -0.8) {
-            this.ResetMaxRotationAnimation();
-        } else if (!this.rotateAnimation) {
-            this.StartMaxBowRotation();
-        }
-    }
-
     RotateBow() {
-        if (this.arrowInBow && this.arrow) {
-            this.MaxRotateAnimationCheckAndPlay();
-        }
+        if (this.allowedToMove){
+            if (this.bowGroup){
+                this.bowGroup.rotation.x = (0.001 * (this.clickPosition.y - this.mousePosition.y));
+            }
+        } 
     }
 
     playHitAnimation() {
@@ -238,11 +209,6 @@ export class Gameplay implements MouseListener {
             this.arrow.position.z = currentArrowPosition.z - endDistance * o;
             this.shooted = true;
         });
-
-        //Schowanie miniGry po odegraniu animacji
-        new Animator({time: arrowSpeed, delay: duration - 2.1}, (o: number) => {
-            Game.game.hud.hideMiniGame();
-        })
 
         this.animation.enabled = true;
         this.animation.reset();
@@ -328,7 +294,8 @@ export class Gameplay implements MouseListener {
 
             }
         }
-        
+
+        // this.RotateBow();
         this.mixer.update(delta);
     }
 
@@ -374,6 +341,7 @@ export class Gameplay implements MouseListener {
         this.arrow.position.copy(this.arrowStartPosition); // Przywróć początkową pozycję strzały
         this.animation.reset(); // Zresetuj animację strzału
         this.animation.enabled = true; // Włącz animację strzału
+        this.bowGroup.rotation.x = 0;
         setTimeout(()=>{
             this.SetTargetInTheSamePlace();
         })

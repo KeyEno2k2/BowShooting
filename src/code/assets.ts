@@ -2,7 +2,7 @@ export namespace assets {
     //export const glb: string = './assets/CITY_BOX_0T.glb';
     export const atlas: string = './assets/atlas/atlas.atlas'; 
     export const glb: string = './assets/ARCHERY_SCENE_KZ2-tool.glb';
-    //export const glb: string = './assets/ArcheryScene.glb';
+    // export const glb: string = './assets/BowShooting.glb';
 
 
     export const GREEN_STRIPE_PASEK_3 : string = "./assets/textures/GREEN_STRIPE_PASEK_3.png";

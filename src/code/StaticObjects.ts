@@ -11,6 +11,7 @@ export class StaticObject {
     static arrowCollider?: CANNON.Body;
     static shadow: Object3D;
     static targetCircle: Object3D;
+    static bowMesh: Object3D;
 
     constructor() {
         StaticObject.bow = Game.game.scene.getObjectByName("Armature_bow")!;
